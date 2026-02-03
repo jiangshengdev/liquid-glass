@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Glass Playground（WebGPU）</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="c" aria-label="WebGPU 画布"></canvas>
+
+      <div class="fallback" id="fallback" hidden>
+        <div class="fallback-card">
+          <div class="fallback-title">WebGPU 不可用</div>
+          <div class="fallback-text">
+            本页面需要 WebGPU。macOS 建议使用 Safari Technology Preview，并开启：
+            <code>Develop → Experimental Features → WebGPU</code>。
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
+
