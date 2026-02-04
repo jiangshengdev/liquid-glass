@@ -136,9 +136,6 @@ fn fs_overlay(in: VSOut) -> @location(0) vec4f {
   let aa = 1.25;
   // Use increasing edges for portability across implementations.
   let fill = 1.0 - smoothstep(-aa, aa, d);
-  if (fill <= 0.0) {
-    return vec4f(0.0);
-  }
 
   // Static refraction: offset the background sampling UV once, using procedural noise.
   // Parameters:
