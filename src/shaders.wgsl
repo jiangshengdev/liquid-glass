@@ -49,45 +49,75 @@ fn sd_round_rect_px(p: vec2f, half: vec2f, r: f32) -> f32 {
   return length(max(q, vec2f(0.0))) + min(max(q.x, q.y), 0.0) - r;
 }
 
-fn sample_contain_uv(uv: vec2f, containerAspect: f32, imageAspect: f32) -> vec3f {
-  // Fit the whole image without cropping (contain). Returns (u, v, mask).
-  // mask=1 when inside the fitted image rect, 0 for letterboxed area.
+fn sample_cover_uv(uv: vec2f, containerAspect: f32, imageAspect: f32) -> vec2f {
+  // Fill the whole container (cover). Crops the overflowing axis, no letterbox.
   var outUv = uv;
-  var mask = 1.0;
 
   if (containerAspect > imageAspect) {
-    // Container is wider than the image: pad X.
-    let wNorm = imageAspect / containerAspect;
-    let pad = (1.0 - wNorm) * 0.5;
-    mask = step(pad, uv.x) * step(uv.x, 1.0 - pad);
-    outUv.x = (uv.x - pad) / max(0.0001, wNorm);
+    // Container is wider: crop Y (zoom in vertically).
+    let scale = containerAspect / max(0.0001, imageAspect);
+    outUv.y = (uv.y - 0.5) / scale + 0.5;
   } else {
-    // Container is taller than the image: pad Y.
-    let hNorm = containerAspect / imageAspect;
-    let pad = (1.0 - hNorm) * 0.5;
-    mask = step(pad, uv.y) * step(uv.y, 1.0 - pad);
-    outUv.y = (uv.y - pad) / max(0.0001, hNorm);
+    // Container is taller: crop X (zoom in horizontally).
+    let scale = imageAspect / max(0.0001, containerAspect);
+    outUv.x = (uv.x - 0.5) / scale + 0.5;
   }
 
-  outUv = clamp(outUv, vec2f(0.0), vec2f(1.0));
-  return vec3f(outUv, mask);
+  return clamp(outUv, vec2f(0.0), vec2f(1.0));
+}
+
+fn backgroundColorAtUv(uv: vec2f) -> vec3f {
+  let canvasSize = u.canvas0.xy;
+  let containerAspect = canvasSize.x / max(1.0, canvasSize.y);
+  let imageAspect = max(0.0001, u.canvas0.z);
+  let imgUv = sample_cover_uv(uv, containerAspect, imageAspect);
+  return textureSample(leftImage, imgSamp, imgUv).rgb;
+}
+
+fn hash21(p: vec2f) -> f32 {
+  return fract(sin(dot(p, vec2f(127.1, 311.7))) * 43758.5453123);
+}
+
+fn value_noise(p: vec2f) -> f32 {
+  let i = floor(p);
+  let f = fract(p);
+  let u = f * f * (3.0 - 2.0 * f);
+
+  let a = hash21(i);
+  let b = hash21(i + vec2f(1.0, 0.0));
+  let c = hash21(i + vec2f(0.0, 1.0));
+  let d = hash21(i + vec2f(1.0, 1.0));
+
+  let x1 = mix(a, b, u.x);
+  let x2 = mix(c, d, u.x);
+  return mix(x1, x2, u.y);
+}
+
+fn fbm(p: vec2f) -> f32 {
+  // Static FBM: fixed octaves, unrolled for compatibility (Safari/WebKit).
+  var v = 0.0;
+  var a = 0.5;
+  var q = p;
+
+  v += a * value_noise(q);
+  q = q * 2.0 + vec2f(17.0, 9.0);
+  a *= 0.5;
+
+  v += a * value_noise(q);
+  q = q * 2.0 + vec2f(17.0, 9.0);
+  a *= 0.5;
+
+  v += a * value_noise(q);
+  q = q * 2.0 + vec2f(17.0, 9.0);
+  a *= 0.5;
+
+  v += a * value_noise(q);
+  return v;
 }
 
 @fragment
 fn fs_background(in: VSOut) -> @location(0) vec4f {
-  let canvasSize = u.canvas0.xy;
-  // NOTE: With the full-screen triangle setup used here, `in.uv` is already 0..1
-  // over the visible viewport. Multiplying by 0.5 would only sample 1/4 of the image.
-  let uv = in.uv; // 0..1
-
-  // Show the full image (contain, no cropping).
-  let containerAspect = canvasSize.x / max(1.0, canvasSize.y);
-  let imageAspect = max(0.0001, u.canvas0.z);
-  let s = sample_contain_uv(uv, containerAspect, imageAspect);
-  var col = textureSample(leftImage, imgSamp, s.xy).rgb;
-  // Letterbox: dark gray, not pure black.
-  col = mix(vec3f(0.05, 0.05, 0.07), col, s.z);
-  return vec4f(col, 1.0);
+  return vec4f(backgroundColorAtUv(in.uv), 1.0);
 }
 
 @fragment
@@ -110,17 +140,27 @@ fn fs_overlay(in: VSOut) -> @location(0) vec4f {
     return vec4f(0.0);
   }
 
+  // Static refraction: offset the background sampling UV once, using procedural noise.
+  // Parameters:
+  // - u.radii0.z: refraction strength (pixels)
+  // - u.radii0.w: noise scale (dimensionless, in overlay-local UV space)
+  let localUv = (fragPx - r0) / max(sz, vec2f(0.0001));
+  let p = localUv * u.radii0.w;
+  let n = vec2f(fbm(p), fbm(p + vec2f(7.13, 31.7))) - vec2f(0.5);
+  let offsetUv = n * (u.radii0.z / max(vec2f(1.0), canvasSize));
+  let uvRefract = clamp(uv + offsetUv, vec2f(0.0), vec2f(1.0));
+
   // Simple fill + subtle stroke (still "no effects", but makes it readable).
   let strokeW = max(0.0, u.radii0.y);
   let stroke = 1.0 - smoothstep(-aa, aa, abs(d) - strokeW);
 
-  let base = u.overlayColor.rgb;
+  var col = backgroundColorAtUv(uvRefract) * u.overlayColor.rgb;
   let a = u.overlayColor.a;
-  var col = base;
   var alpha = a * fill;
   // stroke uses higher alpha
   alpha = max(alpha, (a + 0.18) * stroke);
-  col = col;
+  // Lighten the border slightly to make the shape readable.
+  col = mix(col, vec3f(1.0), sat(stroke * 0.35));
 
   // Premultiply for blending.
   return vec4f(col * alpha, alpha);

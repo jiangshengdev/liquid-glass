@@ -136,15 +136,23 @@ async function main() {
     try {
       const info = await module.getCompilationInfo();
       if (info.messages?.length) {
+        let hasError = false;
         console.groupCollapsed?.("[webgpu] shader compilation info");
         for (const m of info.messages) {
           const where = `line ${m.lineNum}:${m.linePos}`;
           const msg = `${m.type.toUpperCase()} ${where} ${m.message}`;
-          if (m.type === "error") console.error(msg);
+          if (m.type === "error") {
+            hasError = true;
+            console.error(msg);
+          }
           else if (m.type === "warning") console.warn(msg);
           else console.log(msg);
         }
         console.groupEnd?.();
+        if (hasError) {
+          showFallback("WGSL 编译失败：请查看控制台中的 shader compilation info。");
+          return;
+        }
       } else {
         log("shader compilation info: (no messages)");
       }
@@ -189,6 +197,11 @@ async function main() {
     const val = await device.popErrorScope();
     if (oom) console.error("[webgpu] OOM error:", oom);
     if (val) console.error("[webgpu] Validation error:", val);
+    if (oom || val) {
+      const msg = String((val || oom)?.message || val || oom);
+      showFallback(`GPU 校验失败：${msg}`);
+      return;
+    }
   }
 
   const uniformBG = device.createBindGroup({
@@ -226,6 +239,9 @@ async function main() {
     const overlayY = (h - overlayH) * 0.5;
     const overlayR = 56 * dpr;
     const strokeW = 2 * dpr;
+    // Static refraction parameters (device px).
+    const refractionPx = 14 * dpr;
+    const noiseScale = 12.0;
 
     // Pack uniforms: 4 vec4 = 16 floats.
     const f = new Float32Array(16);
@@ -242,13 +258,15 @@ async function main() {
     // radii0: overlayRadiusPx, strokeWidthPx, padding, padding
     f[8] = overlayR;
     f[9] = strokeW;
-    f[10] = 0;
-    f[11] = 0;
+    // radii0.zw: refractionPx, noiseScale
+    f[10] = refractionPx;
+    f[11] = noiseScale;
     // overlayColor: rgba
     f[12] = 1.0;
     f[13] = 1.0;
     f[14] = 1.0;
-    f[15] = 0.10;
+    // Constant alpha (semi-transparent), easy to tweak.
+    f[15] = 0.50;
 
     queue.writeBuffer(uniformBuffer, 0, f);
   }
