@@ -5,14 +5,21 @@ struct Uniforms {
   overlay0: vec4f,
   // overlayRadiusPx, strokeWidthPx, refractionPx, depthPx
   radii0: vec4f,
+  // frostPx, dispersion, frostMix, padding (reserved)
+  params0: vec4f,
   // overlay RGBA (non-premultiplied)
   overlayColor: vec4f,
 }
 
 @group(0) @binding(0) var<uniform> u: Uniforms;
 
-@group(1) @binding(0) var leftImage: texture_2d<f32>;
-@group(1) @binding(1) var imgSamp: sampler;
+// Bind group 1 is shared across all passes.
+// - Pass: scene       -> tex0 = source image
+// - Pass: blur/present-> tex0 = input texture (sceneTex / blurTex)
+// - Pass: overlay     -> tex0 = sharp sceneTex, tex1 = blurred sceneTex
+@group(1) @binding(0) var tex0: texture_2d<f32>;
+@group(1) @binding(1) var tex1: texture_2d<f32>;
+@group(1) @binding(2) var samp0: sampler;
 
 struct VSOut {
   @builtin(position) pos: vec4f,
@@ -66,19 +73,67 @@ fn sample_cover_uv(uv: vec2f, containerAspect: f32, imageAspect: f32) -> vec2f {
   return clamp(outUv, vec2f(0.0), vec2f(1.0));
 }
 
-fn backgroundColorAtUv(uv: vec2f) -> vec3f {
+fn imageColorCoverAtUv(uv: vec2f) -> vec3f {
   let canvasSize = u.canvas0.xy;
   let containerAspect = canvasSize.x / max(1.0, canvasSize.y);
   let imageAspect = max(0.0001, u.canvas0.z);
   let imgUv = sample_cover_uv(uv, containerAspect, imageAspect);
-  return textureSample(leftImage, imgSamp, imgUv).rgb;
+  return textureSampleLevel(tex0, samp0, imgUv, 0.0).rgb;
 }
 
 @fragment
-fn fs_background(in: VSOut) -> @location(0) vec4f {
+fn fs_scene(in: VSOut) -> @location(0) vec4f {
   // Match the DOM/canvas coordinate system: y grows downward.
   let uv = vec2f(in.uv.x, 1.0 - in.uv.y);
-  return vec4f(backgroundColorAtUv(uv), 1.0);
+  return vec4f(imageColorCoverAtUv(uv), 1.0);
+}
+
+@fragment
+fn fs_present(in: VSOut) -> @location(0) vec4f {
+  // Present pass draws an already-cover-mapped scene texture 1:1 to the screen.
+  let uv = vec2f(in.uv.x, 1.0 - in.uv.y);
+  return vec4f(textureSampleLevel(tex0, samp0, uv, 0.0).rgb, 1.0);
+}
+
+fn gauss(x: f32, sigma: f32) -> f32 {
+  let s = max(0.0001, sigma);
+  let inv = 1.0 / (s * s);
+  return exp(-0.5 * x * x * inv);
+}
+
+fn blur1d(uv: vec2f, dirPx: vec2f) -> vec3f {
+  // Separable Gaussian blur.
+  let canvasSize = max(vec2f(1.0), u.canvas0.xy);
+  let texel = 1.0 / canvasSize;
+  let frostPx = clamp(u.params0.x, 0.0, 12.0);
+  let radius = i32(round(frostPx));
+  let sigma = frostPx * 0.5;
+
+  var sum = vec3f(0.0);
+  var wsum = 0.0;
+
+  // Uniform control flow (radius is uniform).
+  for (var i: i32 = -radius; i <= radius; i = i + 1) {
+    let fi = f32(i);
+    let w = gauss(fi, sigma);
+    let uvo = clamp(uv + (dirPx * fi) * texel, vec2f(0.0), vec2f(1.0));
+    sum = sum + textureSampleLevel(tex0, samp0, uvo, 0.0).rgb * w;
+    wsum = wsum + w;
+  }
+
+  return sum / max(1e-6, wsum);
+}
+
+@fragment
+fn fs_blur_h(in: VSOut) -> @location(0) vec4f {
+  let uv = vec2f(in.uv.x, 1.0 - in.uv.y);
+  return vec4f(blur1d(uv, vec2f(1.0, 0.0)), 1.0);
+}
+
+@fragment
+fn fs_blur_v(in: VSOut) -> @location(0) vec4f {
+  let uv = vec2f(in.uv.x, 1.0 - in.uv.y);
+  return vec4f(blur1d(uv, vec2f(0.0, 1.0)), 1.0);
 }
 
 @fragment
@@ -121,13 +176,17 @@ fn fs_overlay(in: VSOut) -> @location(0) vec4f {
   let offsetPx = (-nrm) * (u.radii0.z * edge2);
   let uvRefract = clamp(uv + offsetPx / max(vec2f(1.0), canvasSize), vec2f(0.0), vec2f(1.0));
 
-  // Refraction = sample the background at an offset UV (no blur, no animation).
-  let refracted = backgroundColorAtUv(uvRefract);
+  // Refraction = sample the background at an offset UV (no animation).
+  // Frost = Gaussian blur amount (pre-blurred in a separate pass).
+  let sharp = textureSampleLevel(tex0, samp0, uvRefract, 0.0).rgb;
+  let blurred = textureSampleLevel(tex1, samp0, uvRefract, 0.0).rgb;
+  let frostMix = sat(u.params0.x / 4.0);
+  let refracted = mix(sharp, blurred, frostMix);
 
   // Refraction-only debug: no tint, no border, alpha is just the SDF fill.
   // This makes it easier to judge whether refraction itself is working.
   let col = refracted;
-  let alpha = fill;
+  let alpha = fill * sat(u.overlayColor.a);
 
   // Premultiply for blending.
   return vec4f(col * alpha, alpha);

@@ -101,6 +101,8 @@ async function main() {
     addressModeV: "clamp-to-edge",
   });
 
+  const OFFSCREEN_FORMAT = /** @type {GPUTextureFormat} */ ("rgba8unorm");
+
   // Load the left-side background image (from previous step / downloaded asset).
   const imgUrl = new URL("./assets/left-image.png", import.meta.url).href;
   log("loading image =", imgUrl);
@@ -127,7 +129,8 @@ async function main() {
   const imageBGL = device.createBindGroupLayout({
     entries: [
       { binding: 0, visibility: GPUShaderStage.FRAGMENT, texture: { sampleType: "float" } },
-      { binding: 1, visibility: GPUShaderStage.FRAGMENT, sampler: { type: "filtering" } },
+      { binding: 1, visibility: GPUShaderStage.FRAGMENT, texture: { sampleType: "float" } },
+      { binding: 2, visibility: GPUShaderStage.FRAGMENT, sampler: { type: "filtering" } },
     ],
   });
 
@@ -166,10 +169,31 @@ async function main() {
   device.pushErrorScope("validation");
   device.pushErrorScope("out-of-memory");
 
-  const bgPipeline = device.createRenderPipeline({
+  const scenePipeline = device.createRenderPipeline({
     layout: pipelineLayout,
     vertex: { module, entryPoint: "vs_fullscreen" },
-    fragment: { module, entryPoint: "fs_background", targets: [{ format: presentationFormat }] },
+    fragment: { module, entryPoint: "fs_scene", targets: [{ format: OFFSCREEN_FORMAT }] },
+    primitive: { topology: "triangle-list" },
+  });
+
+  const blurHPipeline = device.createRenderPipeline({
+    layout: pipelineLayout,
+    vertex: { module, entryPoint: "vs_fullscreen" },
+    fragment: { module, entryPoint: "fs_blur_h", targets: [{ format: OFFSCREEN_FORMAT }] },
+    primitive: { topology: "triangle-list" },
+  });
+
+  const blurVPipeline = device.createRenderPipeline({
+    layout: pipelineLayout,
+    vertex: { module, entryPoint: "vs_fullscreen" },
+    fragment: { module, entryPoint: "fs_blur_v", targets: [{ format: OFFSCREEN_FORMAT }] },
+    primitive: { topology: "triangle-list" },
+  });
+
+  const presentPipeline = device.createRenderPipeline({
+    layout: pipelineLayout,
+    vertex: { module, entryPoint: "vs_fullscreen" },
+    fragment: { module, entryPoint: "fs_present", targets: [{ format: presentationFormat }] },
     primitive: { topology: "triangle-list" },
   });
 
@@ -213,7 +237,8 @@ async function main() {
     layout: imageBGL,
     entries: [
       { binding: 0, resource: imgTex.createView() },
-      { binding: 1, resource: sampler },
+      { binding: 1, resource: imgTex.createView() },
+      { binding: 2, resource: sampler },
     ],
   });
 
@@ -223,10 +248,10 @@ async function main() {
     refraction: 56, // CSS px
     depth: 0.35, // 0..1, relative to capsule radius
     dispersion: 0,
-    frost: 0,
+    frost: 4,
     splay: 0,
-    // Debug: alpha=0 means "no tint"; shader currently renders refraction-only anyway.
-    alpha: 0.0,
+    // Constant alpha for easy tweaking; 1.0 means the glass fully replaces the background under it.
+    alpha: 1.0,
   };
 
   // --- Interaction constants (CSS px) ---
@@ -243,6 +268,53 @@ async function main() {
   let canvasDpr = 1;
   let canvasCssW = 0;
   let canvasCssH = 0;
+
+  // Offscreen render targets (scene + Gaussian blur).
+  /** @type {GPUTexture | null} */
+  let sceneTex = null;
+  /** @type {GPUTexture | null} */
+  let blurTexA = null;
+  /** @type {GPUTexture | null} */
+  let blurTexB = null;
+  /** @type {GPUBindGroup | null} */
+  let blurHBG = null;
+  /** @type {GPUBindGroup | null} */
+  let blurVBG = null;
+  /** @type {GPUBindGroup | null} */
+  let presentBG = null;
+  /** @type {GPUBindGroup | null} */
+  let overlayBG = null;
+  let sceneDirty = true;
+
+  const makeImageBG = (texA, texB) =>
+    device.createBindGroup({
+      layout: imageBGL,
+      entries: [
+        { binding: 0, resource: texA.createView() },
+        { binding: 1, resource: texB.createView() },
+        { binding: 2, resource: sampler },
+      ],
+    });
+
+  function recreateOffscreenTargets() {
+    // Destroy old textures to avoid leaking GPU memory on resize.
+    try { sceneTex?.destroy(); } catch { /* ignore */ }
+    try { blurTexA?.destroy(); } catch { /* ignore */ }
+    try { blurTexB?.destroy(); } catch { /* ignore */ }
+
+    const size = { width: canvasPxW, height: canvasPxH };
+    const usage = GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING;
+
+    sceneTex = device.createTexture({ size, format: OFFSCREEN_FORMAT, usage });
+    blurTexA = device.createTexture({ size, format: OFFSCREEN_FORMAT, usage });
+    blurTexB = device.createTexture({ size, format: OFFSCREEN_FORMAT, usage });
+
+    blurHBG = makeImageBG(sceneTex, sceneTex);
+    blurVBG = makeImageBG(blurTexA, blurTexA);
+    presentBG = makeImageBG(sceneTex, sceneTex);
+    overlayBG = makeImageBG(sceneTex, blurTexB);
+    sceneDirty = true;
+  }
 
   function initGlassDefault(cssW, cssH) {
     const w = Math.min(cssW * 0.8, 920);
@@ -299,10 +371,12 @@ async function main() {
     if (!glassInited) initGlassDefault(cssW, cssH);
     clampGlass(cssW, cssH);
     updateGlassUi(!glassUi?.hidden);
+
+    if (changed || !sceneTex) recreateOffscreenTargets();
     return changed;
   }
 
-  const uniformsF32 = new Float32Array(16);
+  const uniformsF32 = new Float32Array(20);
   function writeUniforms() {
     const dpr = canvasDpr;
     const w = canvasPxW;
@@ -318,7 +392,9 @@ async function main() {
     const refractionPx = PARAMS.refraction * dpr;
     const depthPx = overlayR * PARAMS.depth;
 
-    // Pack uniforms: 4 vec4 = 16 floats.
+    const frostPx = PARAMS.frost * dpr;
+
+    // Pack uniforms: 5 vec4 = 20 floats.
     const f = uniformsF32;
     // canvas0: canvasW, canvasH, imageAspect, padding
     f[0] = w;
@@ -335,11 +411,16 @@ async function main() {
     f[9] = strokeW;
     f[10] = refractionPx;
     f[11] = depthPx;
+    // params0: frostPx, dispersion, splay, padding
+    f[12] = frostPx;
+    f[13] = PARAMS.dispersion;
+    f[14] = PARAMS.splay;
+    f[15] = 0;
     // overlayColor: rgb + alpha (non-premultiplied)
-    f[12] = 1.0;
-    f[13] = 1.0;
-    f[14] = 1.0;
-    f[15] = PARAMS.alpha;
+    f[16] = 1.0;
+    f[17] = 1.0;
+    f[18] = 1.0;
+    f[19] = PARAMS.alpha;
 
     queue.writeBuffer(uniformBuffer, 0, f);
   }
@@ -544,29 +625,99 @@ async function main() {
   function render() {
     // Guard: some Safari builds may briefly return a zero-sized drawable on resize.
     if (canvas.width <= 1 || canvas.height <= 1) return;
+    if (!sceneTex || !blurTexA || !blurTexB || !blurHBG || !blurVBG || !presentBG || !overlayBG) return;
+
     const encoder = device.createCommandEncoder();
-    const view = ctx.getCurrentTexture().createView();
-    const pass = encoder.beginRenderPass({
-      colorAttachments: [
-        {
-          view,
-          clearValue: { r: 0.05, g: 0.05, b: 0.07, a: 1 },
-          loadOp: "clear",
-          storeOp: "store",
-        },
-      ],
-    });
 
-    pass.setBindGroup(0, uniformBG);
-    pass.setBindGroup(1, imageBG);
+    // (Re)build the offscreen scene + Gaussian blur only when needed.
+    if (sceneDirty) {
+      // Pass 1: render cover-mapped image into sceneTex.
+      {
+        const pass = encoder.beginRenderPass({
+          colorAttachments: [
+            {
+              view: sceneTex.createView(),
+              clearValue: { r: 0, g: 0, b: 0, a: 1 },
+              loadOp: "clear",
+              storeOp: "store",
+            },
+          ],
+        });
+        pass.setBindGroup(0, uniformBG);
+        pass.setBindGroup(1, imageBG);
+        pass.setPipeline(scenePipeline);
+        pass.draw(3);
+        pass.end();
+      }
 
-    pass.setPipeline(bgPipeline);
-    pass.draw(3);
+      // Pass 2: horizontal blur -> blurTexA.
+      {
+        const pass = encoder.beginRenderPass({
+          colorAttachments: [
+            {
+              view: blurTexA.createView(),
+              clearValue: { r: 0, g: 0, b: 0, a: 1 },
+              loadOp: "clear",
+              storeOp: "store",
+            },
+          ],
+        });
+        pass.setBindGroup(0, uniformBG);
+        pass.setBindGroup(1, blurHBG);
+        pass.setPipeline(blurHPipeline);
+        pass.draw(3);
+        pass.end();
+      }
 
-    pass.setPipeline(overlayPipeline);
-    pass.draw(3);
+      // Pass 3: vertical blur -> blurTexB.
+      {
+        const pass = encoder.beginRenderPass({
+          colorAttachments: [
+            {
+              view: blurTexB.createView(),
+              clearValue: { r: 0, g: 0, b: 0, a: 1 },
+              loadOp: "clear",
+              storeOp: "store",
+            },
+          ],
+        });
+        pass.setBindGroup(0, uniformBG);
+        pass.setBindGroup(1, blurVBG);
+        pass.setPipeline(blurVPipeline);
+        pass.draw(3);
+        pass.end();
+      }
 
-    pass.end();
+      sceneDirty = false;
+    }
+
+    // Final pass: present scene + overlay glass.
+    {
+      const view = ctx.getCurrentTexture().createView();
+      const pass = encoder.beginRenderPass({
+        colorAttachments: [
+          {
+            view,
+            clearValue: { r: 0.05, g: 0.05, b: 0.07, a: 1 },
+            loadOp: "clear",
+            storeOp: "store",
+          },
+        ],
+      });
+
+      pass.setBindGroup(0, uniformBG);
+
+      pass.setBindGroup(1, presentBG);
+      pass.setPipeline(presentPipeline);
+      pass.draw(3);
+
+      pass.setBindGroup(1, overlayBG);
+      pass.setPipeline(overlayPipeline);
+      pass.draw(3);
+
+      pass.end();
+    }
+
     queue.submit([encoder.finish()]);
   }
 
