@@ -365,7 +365,19 @@ async function main() {
     const rad = glass.hCss * 0.5;
     const d = sdRoundRect(px - cx, py - cy, halfW, halfH, rad);
     const inside = d <= 0;
-    const active = d <= RESIZE_MARGIN;
+
+    // IMPORTANT:
+    // - Move should respect the *rounded* shape (avoid dragging from transparent corners).
+    // - Resize/handles should behave like Figma/Photoshop: use the AABB (square selection box),
+    //   otherwise corner handles become unreachable because the rounded-rect SDF is far outside.
+    const x1 = glass.xCss;
+    const y1 = glass.yCss;
+    const x2 = glass.xCss + glass.wCss;
+    const y2 = glass.yCss + glass.hCss;
+    const dx = Math.max(x1 - px, 0, px - x2);
+    const dy = Math.max(y1 - py, 0, py - y2);
+    const distRect = Math.hypot(dx, dy);
+    const active = distRect <= RESIZE_MARGIN;
 
     const dl = px - glass.xCss;
     const dr = glass.xCss + glass.wCss - px;
@@ -593,8 +605,8 @@ async function main() {
 
     const p = pointerPosCss(ev);
     const hit = hitTestGlass(p.x, p.y);
-    // Ignore clicks too far from the glass.
-    if (hit.d > RESIZE_MARGIN || !hit.mode) return;
+    // Ignore clicks too far from the glass / selection box.
+    if (!hit.mode) return;
 
     canvas.setPointerCapture(ev.pointerId);
     startDrag(hit.mode, ev.pointerId, p.x, p.y, hit.edges);
