@@ -194,14 +194,14 @@ fn fs_overlay(in: VSOut) -> @location(0) vec4f {
   let ndotl = dot(nrm, lightDir);
   let hl1 = sat(ndotl);
   let hl2 = sat(-ndotl);
-  // Highlight region thickness. Smaller => thinner highlight.
+  // 高光区域粗细（越小越细）。
   let rimW = max(1.5, u.radii0.x * 0.07);
   let rim = sat(1.0 - distIn / rimW);
   let rimLine = sat(1.0 - distIn / max(0.75, rimW * 0.22));
 
   var col = refracted;
-  // macOS Tahoe-like "double highlight" (glass feel): both sides get a specular rim.
-  // Top-left highlight is stronger; bottom-right highlight is weaker.
+  // macOS Tahoe 风格“双高光”（强调玻璃感）：两侧都是高光而不是阴影。
+  // 左上更强、右下更弱。
   let hlAmt1 = sat((0.10 * rim + 1.00 * rimLine) * hl1 * (lightStrength * 1.65));
   let hlAmt2 = sat((0.06 * rim + 0.80 * rimLine) * hl2 * (lightStrength * 0.95));
   col = mix(col, vec3f(1.0), hlAmt1);
