@@ -32,6 +32,35 @@ canvas {
   touch-action: none;
 }
 
+.glass-ui {
+  --handle: 10px;
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.28);
+}
+
+.glass-handle {
+  position: absolute;
+  width: var(--handle);
+  height: var(--handle);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  border-radius: 3px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.glass-handle.tl { left: 0; top: 0; transform: translate(-50%, -50%); }
+.glass-handle.tm { left: 50%; top: 0; transform: translate(-50%, -50%); }
+.glass-handle.tr { right: 0; top: 0; transform: translate(50%, -50%); }
+.glass-handle.ml { left: 0; top: 50%; transform: translate(-50%, -50%); }
+.glass-handle.mr { right: 0; top: 50%; transform: translate(50%, -50%); }
+.glass-handle.bl { left: 0; bottom: 0; transform: translate(-50%, 50%); }
+.glass-handle.bm { left: 50%; bottom: 0; transform: translate(-50%, 50%); }
+.glass-handle.br { right: 0; bottom: 0; transform: translate(50%, 50%); }
+
 /* Ensure the HTML `hidden` attribute always works, even if we style the element. */
 [hidden] {
   display: none !important;

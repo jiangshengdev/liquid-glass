@@ -83,6 +83,7 @@ async function main() {
 
   const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById("c"));
   const ctx = /** @type {GPUCanvasContext} */ (canvas.getContext("webgpu"));
+  const glassUi = /** @type {HTMLDivElement | null} */ (document.getElementById("glass-ui"));
   if (!ctx) {
     showFallback("canvas.getContext('webgpu') 返回 null：可能是 WebGPU 未启用，或页面不是安全上下文。");
     return;
@@ -264,6 +265,16 @@ async function main() {
     glass.yCss = clamp(glass.yCss, 0, Math.max(0, cssH - glass.hCss));
   }
 
+  function updateGlassUi(visible) {
+    if (!glassUi) return;
+    if (typeof visible === "boolean") glassUi.hidden = !visible;
+    if (glassUi.hidden) return;
+    glassUi.style.left = `${glass.xCss}px`;
+    glassUi.style.top = `${glass.yCss}px`;
+    glassUi.style.width = `${glass.wCss}px`;
+    glassUi.style.height = `${glass.hCss}px`;
+  }
+
   function ensureCanvasConfigured() {
     const dpr = dprClamped();
     const cssW = canvas.clientWidth;
@@ -287,6 +298,7 @@ async function main() {
 
     if (!glassInited) initGlassDefault(cssW, cssH);
     clampGlass(cssW, cssH);
+    updateGlassUi(!glassUi?.hidden);
     return changed;
   }
 
@@ -586,6 +598,7 @@ async function main() {
 
     canvas.setPointerCapture(ev.pointerId);
     startDrag(hit.mode, ev.pointerId, p.x, p.y, hit.edges);
+    updateGlassUi(true);
     canvas.style.cursor = cursorForHit(hit.mode, hit.edges) || canvas.style.cursor;
     ev.preventDefault();
     requestRender();
@@ -600,6 +613,7 @@ async function main() {
       const hit = hitTestGlass(p.x, p.y);
       const c = cursorForHit(hit.mode, hit.edges);
       canvas.style.cursor = c || "default";
+      updateGlassUi(!!hit.mode);
       return;
     }
 
@@ -628,6 +642,11 @@ async function main() {
   canvas.addEventListener("lostpointercapture", (ev) => {
     endDrag(ev.pointerId);
     requestRender();
+  });
+  canvas.addEventListener("pointerleave", () => {
+    if (drag.active) return;
+    canvas.style.cursor = "default";
+    updateGlassUi(false);
   });
 
   window.addEventListener("resize", requestRender);

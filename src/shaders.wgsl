@@ -76,13 +76,16 @@ fn backgroundColorAtUv(uv: vec2f) -> vec3f {
 
 @fragment
 fn fs_background(in: VSOut) -> @location(0) vec4f {
-  return vec4f(backgroundColorAtUv(in.uv), 1.0);
+  // Match the DOM/canvas coordinate system: y grows downward.
+  let uv = vec2f(in.uv.x, 1.0 - in.uv.y);
+  return vec4f(backgroundColorAtUv(uv), 1.0);
 }
 
 @fragment
 fn fs_overlay(in: VSOut) -> @location(0) vec4f {
   let canvasSize = u.canvas0.xy;
-  let uv = in.uv;
+  // Match the DOM/canvas coordinate system: y grows downward.
+  let uv = vec2f(in.uv.x, 1.0 - in.uv.y);
   let fragPx = uv * canvasSize;
 
   // Overlay rectangle in pixel space.
