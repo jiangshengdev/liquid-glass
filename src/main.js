@@ -250,6 +250,9 @@ async function main() {
     dispersion: 0,
     frost: 4,
     splay: 0,
+    // Light (directional). Angle in degrees, default -45° = top-left.
+    lightAngleDeg: -45,
+    lightStrength: 0.8, // 0..1
     // Constant alpha for easy tweaking; 1.0 means the glass fully replaces the background under it.
     alpha: 1.0,
   };
@@ -376,7 +379,7 @@ async function main() {
     return changed;
   }
 
-  const uniformsF32 = new Float32Array(20);
+  const uniformsF32 = new Float32Array(24);
   function writeUniforms() {
     const dpr = canvasDpr;
     const w = canvasPxW;
@@ -393,8 +396,10 @@ async function main() {
     const depthPx = overlayR * PARAMS.depth;
 
     const frostPx = PARAMS.frost * dpr;
+    const lightAngleRad = (PARAMS.lightAngleDeg * Math.PI) / 180;
+    const lightStrength = PARAMS.lightStrength;
 
-    // Pack uniforms: 5 vec4 = 20 floats.
+    // Pack uniforms: 6 vec4 = 24 floats.
     const f = uniformsF32;
     // canvas0: canvasW, canvasH, imageAspect, padding
     f[0] = w;
@@ -411,16 +416,21 @@ async function main() {
     f[9] = strokeW;
     f[10] = refractionPx;
     f[11] = depthPx;
-    // params0: frostPx, dispersion, splay, padding
+    // params0: frostPx, lightAngleRad, lightStrength, padding
     f[12] = frostPx;
-    f[13] = PARAMS.dispersion;
-    f[14] = PARAMS.splay;
+    f[13] = lightAngleRad;
+    f[14] = lightStrength;
     f[15] = 0;
+    // params1: dispersion, splay, reserved, reserved
+    f[16] = PARAMS.dispersion;
+    f[17] = PARAMS.splay;
+    f[18] = 0;
+    f[19] = 0;
     // overlayColor: rgb + alpha (non-premultiplied)
-    f[16] = 1.0;
-    f[17] = 1.0;
-    f[18] = 1.0;
-    f[19] = PARAMS.alpha;
+    f[20] = 1.0;
+    f[21] = 1.0;
+    f[22] = 1.0;
+    f[23] = PARAMS.alpha;
 
     queue.writeBuffer(uniformBuffer, 0, f);
   }

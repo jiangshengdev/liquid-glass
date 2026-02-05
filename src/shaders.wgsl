@@ -5,8 +5,10 @@ struct Uniforms {
   overlay0: vec4f,
   // overlayRadiusPx, strokeWidthPx, refractionPx, depthPx
   radii0: vec4f,
-  // frostPx, dispersion, frostMix, padding (reserved)
+  // frostPx, lightAngleRad, lightStrength, padding (angle: clockwise from up, in radians)
   params0: vec4f,
+  // dispersion, splay, reserved, reserved
+  params1: vec4f,
   // overlay RGBA (non-premultiplied)
   overlayColor: vec4f,
 }
@@ -183,9 +185,30 @@ fn fs_overlay(in: VSOut) -> @location(0) vec4f {
   let frostMix = sat(u.params0.x / 4.0);
   let refracted = mix(sharp, blurred, frostMix);
 
+  // Directional light: a simple bevel-like highlight/shadow near the edge.
+  // Default: angle = -45deg (top-left), strength = 0.8.
+  // Angle convention: clockwise from "up" in DOM/canvas space (y grows downward).
+  let ang = u.params0.y;
+  let lightStrength = sat(u.params0.z);
+  let lightDir = normalize(vec2f(sin(ang), -cos(ang))); // -45deg => (-0.707,-0.707) = top-left
+  let ndotl = dot(nrm, lightDir);
+  let hl = sat(ndotl);
+  let sh = sat(-ndotl);
+  // Highlight region thickness. Smaller => thinner highlight.
+  let rimW = max(1.5, u.radii0.x * 0.07);
+  let rim = sat(1.0 - distIn / rimW);
+  let rimLine = sat(1.0 - distIn / max(0.75, rimW * 0.22));
+
+  var col = refracted;
+  // Highlight: mix towards white (stronger right at the edge).
+  let hlAmt = sat((0.10 * rim + 1.00 * rimLine) * hl * (lightStrength * 1.35));
+  col = mix(col, vec3f(1.0), hlAmt);
+  // Shadow: multiplicative darkening (so it doesn't look like a black stroke).
+  let shAmt = sat(0.35 * rim * sh * lightStrength);
+  col = col * (1.0 - shAmt);
+
   // Refraction-only debug: no tint, no border, alpha is just the SDF fill.
   // This makes it easier to judge whether refraction itself is working.
-  let col = refracted;
   let alpha = fill * sat(u.overlayColor.a);
 
   // Premultiply for blending.
