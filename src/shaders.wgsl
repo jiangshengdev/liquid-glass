@@ -142,22 +142,26 @@ fn fs_overlay(in: VSOut) -> @location(0) vec4f {
   // - u.radii0.z: refraction strength (pixels)
   // - u.radii0.w: noise scale (dimensionless, in overlay-local UV space)
   let localUv = (fragPx - r0) / max(sz, vec2f(0.0001));
+  let localCentered = localUv - vec2f(0.5);
+  // Make distortion a bit stronger near the long edges (lens-like).
+  let aspect = sz.x / max(1.0, sz.y);
+  let r = length(localCentered * vec2f(aspect, 1.0));
+  let lens = sat((r - 0.05) / 0.55);
+
   let p = localUv * u.radii0.w;
-  let n = vec2f(fbm(p), fbm(p + vec2f(7.13, 31.7))) - vec2f(0.5);
-  let offsetUv = n * (u.radii0.z / max(vec2f(1.0), canvasSize));
+  // Expand fbm from roughly [0..1) to [-1..1) to make the refraction clearly visible.
+  let n = vec2f(fbm(p), fbm(p + vec2f(7.13, 31.7))) * 2.0 - vec2f(1.0);
+  let strength = mix(0.20, 1.0, lens * lens);
+  let offsetUv = n * (u.radii0.z / max(vec2f(1.0), canvasSize)) * strength;
   let uvRefract = clamp(uv + offsetUv, vec2f(0.0), vec2f(1.0));
 
-  // Simple fill + subtle stroke (still "no effects", but makes it readable).
-  let strokeW = max(0.0, u.radii0.y);
-  let stroke = 1.0 - smoothstep(-aa, aa, abs(d) - strokeW);
+  // Refraction = sample the background at an offset UV (no blur, no animation).
+  let refracted = backgroundColorAtUv(uvRefract);
 
-  var col = backgroundColorAtUv(uvRefract) * u.overlayColor.rgb;
-  let a = u.overlayColor.a;
-  var alpha = a * fill;
-  // stroke uses higher alpha
-  alpha = max(alpha, (a + 0.18) * stroke);
-  // Lighten the border slightly to make the shape readable.
-  col = mix(col, vec3f(1.0), sat(stroke * 0.35));
+  // Refraction-only debug: no tint, no border, alpha is just the SDF fill.
+  // This makes it easier to judge whether refraction itself is working.
+  let col = refracted;
+  let alpha = fill;
 
   // Premultiply for blending.
   return vec4f(col * alpha, alpha);

@@ -232,16 +232,21 @@ async function main() {
     ctx.configure({ device, format: presentationFormat, alphaMode: "premultiplied" });
     log("ctx.configure =", { w, h, dpr, presentationFormat });
 
-    // Show image + centered rounded rect. Sizes are in CSS px; convert to device px.
-    const overlayW = 380 * dpr;
-    const overlayH = 112 * dpr;
+    // Centered rounded rect (capsule). Size is based on viewport (CSS px) then converted to device px.
+    const cssW = canvas.clientWidth;
+    const cssH = canvas.clientHeight;
+    const overlayWCss = Math.min(cssW * 0.8, 920);
+    const overlayHCss = Math.min(cssH * 0.32, 280);
+    const overlayW = Math.max(1, Math.round(overlayWCss * dpr));
+    const overlayH = Math.max(1, Math.round(overlayHCss * dpr));
     const overlayX = (w - overlayW) * 0.5;
     const overlayY = (h - overlayH) * 0.5;
-    const overlayR = 56 * dpr;
-    const strokeW = 2 * dpr;
+    const overlayR = overlayH * 0.5;
+    const strokeW = 0;
     // Static refraction parameters (device px).
-    const refractionPx = 14 * dpr;
-    const noiseScale = 12.0;
+    // Increase these to make the distortion more obvious (still static).
+    const refractionPx = 56 * dpr;
+    const noiseScale = 3.5;
 
     // Pack uniforms: 4 vec4 = 16 floats.
     const f = new Float32Array(16);
@@ -265,8 +270,9 @@ async function main() {
     f[12] = 1.0;
     f[13] = 1.0;
     f[14] = 1.0;
-    // Constant alpha (semi-transparent), easy to tweak.
-    f[15] = 0.50;
+    // Debug: "透明度 = 0"（不叠加任何半透明染色，只看折射本身）。
+    // Note: shader currently ignores this alpha for the refraction-only mode.
+    f[15] = 0.0;
 
     queue.writeBuffer(uniformBuffer, 0, f);
   }
