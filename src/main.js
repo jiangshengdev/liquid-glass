@@ -216,42 +216,98 @@ async function main() {
     ],
   });
 
-  let lastW = 0;
-  let lastH = 0;
-  let lastDpr = 0;
-  function configureIfNeeded() {
-    const dpr = dprClamped();
-    const w = Math.max(1, Math.floor(canvas.clientWidth * dpr));
-    const h = Math.max(1, Math.floor(canvas.clientHeight * dpr));
-    if (w === lastW && h === lastH && dpr === lastDpr) return;
-    lastW = w;
-    lastH = h;
-    lastDpr = dpr;
-    canvas.width = w;
-    canvas.height = h;
-    ctx.configure({ device, format: presentationFormat, alphaMode: "premultiplied" });
-    log("ctx.configure =", { w, h, dpr, presentationFormat });
+  // --- Parameters (official Figma: Refraction / depth / dispersion / frost / splay) ---
+  // This step only uses Refraction + depth. Others are placeholders (kept at 0).
+  const PARAMS = {
+    refraction: 56, // CSS px
+    depth: 0.35, // 0..1, relative to capsule radius
+    dispersion: 0,
+    frost: 0,
+    splay: 0,
+    // Debug: alpha=0 means "no tint"; shader currently renders refraction-only anyway.
+    alpha: 0.0,
+  };
 
-    // Centered rounded rect (capsule). Size is based on viewport (CSS px) then converted to device px.
+  // --- Interaction constants (CSS px) ---
+  const MIN_W = 240;
+  const MIN_H = 96;
+  const RESIZE_MARGIN = 18;
+
+  // Persistent glass rect (CSS px) so resizing the window doesn't reset placement.
+  const glass = { xCss: 0, yCss: 0, wCss: 0, hCss: 0 };
+  let glassInited = false;
+
+  let canvasPxW = 0;
+  let canvasPxH = 0;
+  let canvasDpr = 1;
+  let canvasCssW = 0;
+  let canvasCssH = 0;
+
+  function initGlassDefault(cssW, cssH) {
+    const w = Math.min(cssW * 0.8, 920);
+    const h = Math.min(cssH * 0.32, 280);
+    glass.wCss = Math.max(MIN_W, Math.min(cssW, w));
+    glass.hCss = Math.max(MIN_H, Math.min(cssH, h));
+    // Keep a horizontal capsule by default.
+    glass.wCss = Math.max(glass.wCss, glass.hCss);
+    glass.xCss = (cssW - glass.wCss) * 0.5;
+    glass.yCss = (cssH - glass.hCss) * 0.5;
+    glassInited = true;
+  }
+
+  function clampGlass(cssW, cssH) {
+    glass.wCss = clamp(glass.wCss, MIN_W, Math.max(MIN_W, cssW));
+    glass.hCss = clamp(glass.hCss, MIN_H, Math.max(MIN_H, cssH));
+    // Capsule constraint: radius = height/2 => height should not exceed width.
+    glass.hCss = Math.min(glass.hCss, glass.wCss);
+    glass.xCss = clamp(glass.xCss, 0, Math.max(0, cssW - glass.wCss));
+    glass.yCss = clamp(glass.yCss, 0, Math.max(0, cssH - glass.hCss));
+  }
+
+  function ensureCanvasConfigured() {
+    const dpr = dprClamped();
     const cssW = canvas.clientWidth;
     const cssH = canvas.clientHeight;
-    const overlayWCss = Math.min(cssW * 0.8, 920);
-    const overlayHCss = Math.min(cssH * 0.32, 280);
-    const overlayW = Math.max(1, Math.round(overlayWCss * dpr));
-    const overlayH = Math.max(1, Math.round(overlayHCss * dpr));
-    const overlayX = (w - overlayW) * 0.5;
-    const overlayY = (h - overlayH) * 0.5;
+    const w = Math.max(1, Math.floor(cssW * dpr));
+    const h = Math.max(1, Math.floor(cssH * dpr));
+
+    const changed = w !== canvasPxW || h !== canvasPxH || dpr !== canvasDpr;
+    canvasPxW = w;
+    canvasPxH = h;
+    canvasDpr = dpr;
+    canvasCssW = cssW;
+    canvasCssH = cssH;
+
+    if (changed) {
+      canvas.width = w;
+      canvas.height = h;
+      ctx.configure({ device, format: presentationFormat, alphaMode: "premultiplied" });
+      log("ctx.configure =", { w, h, dpr, presentationFormat });
+    }
+
+    if (!glassInited) initGlassDefault(cssW, cssH);
+    clampGlass(cssW, cssH);
+    return changed;
+  }
+
+  const uniformsF32 = new Float32Array(16);
+  function writeUniforms() {
+    const dpr = canvasDpr;
+    const w = canvasPxW;
+    const h = canvasPxH;
+
+    const overlayX = glass.xCss * dpr;
+    const overlayY = glass.yCss * dpr;
+    const overlayW = glass.wCss * dpr;
+    const overlayH = glass.hCss * dpr;
     const overlayR = overlayH * 0.5;
     const strokeW = 0;
-    // Static refraction parameters (device px).
-    // `refractionPx`: edge max offset in pixels.
-    // `depth`: how far the edge distortion penetrates inward (0..1, relative to radius).
-    const refractionPx = 56 * dpr;
-    const depth = 0.35;
-    const depthPx = overlayR * depth;
+
+    const refractionPx = PARAMS.refraction * dpr;
+    const depthPx = overlayR * PARAMS.depth;
 
     // Pack uniforms: 4 vec4 = 16 floats.
-    const f = new Float32Array(16);
+    const f = uniformsF32;
     // canvas0: canvasW, canvasH, imageAspect, padding
     f[0] = w;
     f[1] = h;
@@ -262,21 +318,203 @@ async function main() {
     f[5] = overlayY;
     f[6] = overlayW;
     f[7] = overlayH;
-    // radii0: overlayRadiusPx, strokeWidthPx, padding, padding
+    // radii0: overlayRadiusPx, strokeWidthPx, refractionPx, depthPx
     f[8] = overlayR;
     f[9] = strokeW;
-    // radii0.zw: refractionPx, depthPx
     f[10] = refractionPx;
     f[11] = depthPx;
-    // overlayColor: rgba
+    // overlayColor: rgb + alpha (non-premultiplied)
     f[12] = 1.0;
     f[13] = 1.0;
     f[14] = 1.0;
-    // Debug: "透明度 = 0"（不叠加任何半透明染色，只看折射本身）。
-    // Note: shader currently ignores this alpha for the refraction-only mode.
-    f[15] = 0.0;
+    f[15] = PARAMS.alpha;
 
     queue.writeBuffer(uniformBuffer, 0, f);
+  }
+
+  function sdRoundRect(px, py, halfW, halfH, r) {
+    const qx = Math.abs(px) - (halfW - r);
+    const qy = Math.abs(py) - (halfH - r);
+    const mx = Math.max(qx, 0);
+    const my = Math.max(qy, 0);
+    return Math.hypot(mx, my) + Math.min(Math.max(qx, qy), 0) - r;
+  }
+
+  function pointerPosCss(ev) {
+    const r = canvas.getBoundingClientRect();
+    return { x: ev.clientX - r.left, y: ev.clientY - r.top };
+  }
+
+  function hitTestGlass(px, py) {
+    const cx = glass.xCss + glass.wCss * 0.5;
+    const cy = glass.yCss + glass.hCss * 0.5;
+    const halfW = glass.wCss * 0.5;
+    const halfH = glass.hCss * 0.5;
+    const rad = glass.hCss * 0.5;
+    const d = sdRoundRect(px - cx, py - cy, halfW, halfH, rad);
+    const inside = d <= 0;
+    const active = d <= RESIZE_MARGIN;
+
+    const dl = px - glass.xCss;
+    const dr = glass.xCss + glass.wCss - px;
+    const dt = py - glass.yCss;
+    const db = glass.yCss + glass.hCss - py;
+    const adl = Math.abs(dl);
+    const adr = Math.abs(dr);
+    const adt = Math.abs(dt);
+    const adb = Math.abs(db);
+
+    let nearL = adl < RESIZE_MARGIN;
+    let nearR = adr < RESIZE_MARGIN;
+    if (nearL && nearR) {
+      nearL = adl <= adr;
+      nearR = !nearL;
+    }
+
+    let nearT = adt < RESIZE_MARGIN;
+    let nearB = adb < RESIZE_MARGIN;
+    if (nearT && nearB) {
+      nearT = adt <= adb;
+      nearB = !nearT;
+    }
+
+    const edges = active ? { l: nearL, r: nearR, t: nearT, b: nearB } : { l: false, r: false, t: false, b: false };
+    const wantsResize = active && (nearL || nearR || nearT || nearB);
+    const mode = wantsResize ? "resize" : inside ? "move" : null;
+    return { d, inside, mode, edges };
+  }
+
+  function cursorForHit(mode, edges) {
+    if (mode === "resize") {
+      const { l, r, t, b } = edges;
+      if ((l && t) || (r && b)) return "nwse-resize";
+      if ((r && t) || (l && b)) return "nesw-resize";
+      if (l || r) return "ew-resize";
+      if (t || b) return "ns-resize";
+    }
+    if (mode === "move") return "move";
+    return "";
+  }
+
+  const drag = {
+    active: false,
+    mode: /** @type {"move"|"resize"} */ ("move"),
+    pointerId: -1,
+    startPx: 0,
+    startPy: 0,
+    startX: 0,
+    startY: 0,
+    startW: 0,
+    startH: 0,
+    l: false,
+    r: false,
+    t: false,
+    b: false,
+  };
+
+  function startDrag(mode, pointerId, px, py, edges) {
+    drag.active = true;
+    drag.mode = mode;
+    drag.pointerId = pointerId;
+    drag.startPx = px;
+    drag.startPy = py;
+    drag.startX = glass.xCss;
+    drag.startY = glass.yCss;
+    drag.startW = glass.wCss;
+    drag.startH = glass.hCss;
+    drag.l = !!edges?.l;
+    drag.r = !!edges?.r;
+    drag.t = !!edges?.t;
+    drag.b = !!edges?.b;
+  }
+
+  function endDrag(pointerId) {
+    if (!drag.active || pointerId !== drag.pointerId) return;
+    drag.active = false;
+    drag.pointerId = -1;
+  }
+
+  function applyMove(px, py) {
+    const dx = px - drag.startPx;
+    const dy = py - drag.startPy;
+    glass.xCss = drag.startX + dx;
+    glass.yCss = drag.startY + dy;
+    clampGlass(canvasCssW, canvasCssH);
+  }
+
+  function applyResize(px, py) {
+    const dx = px - drag.startPx;
+    const dy = py - drag.startPy;
+
+    let x1 = drag.startX;
+    let y1 = drag.startY;
+    let x2 = drag.startX + drag.startW;
+    let y2 = drag.startY + drag.startH;
+
+    if (drag.l) x1 += dx;
+    if (drag.r) x2 += dx;
+    if (drag.t) y1 += dy;
+    if (drag.b) y2 += dy;
+
+    // Min size.
+    if (x2 - x1 < MIN_W) {
+      if (drag.l && !drag.r) x1 = x2 - MIN_W;
+      else x2 = x1 + MIN_W;
+    }
+    if (y2 - y1 < MIN_H) {
+      if (drag.t && !drag.b) y1 = y2 - MIN_H;
+      else y2 = y1 + MIN_H;
+    }
+
+    // Clamp to canvas bounds (prefer clamping the dragged edge).
+    if (drag.l && !drag.r) {
+      x1 = clamp(x1, 0, x2 - MIN_W);
+    } else if (drag.r && !drag.l) {
+      x2 = clamp(x2, x1 + MIN_W, canvasCssW);
+    } else {
+      const w = x2 - x1;
+      x1 = clamp(x1, 0, Math.max(0, canvasCssW - w));
+      x2 = x1 + w;
+    }
+
+    if (drag.t && !drag.b) {
+      y1 = clamp(y1, 0, y2 - MIN_H);
+    } else if (drag.b && !drag.t) {
+      y2 = clamp(y2, y1 + MIN_H, canvasCssH);
+    } else {
+      const h = y2 - y1;
+      y1 = clamp(y1, 0, Math.max(0, canvasCssH - h));
+      y2 = y1 + h;
+    }
+
+    // Capsule constraint: keep height <= width (so radius = height/2 stays valid).
+    let w = x2 - x1;
+    let h = y2 - y1;
+    if (h > w) {
+      const newH = w;
+      if (drag.t && !drag.b) y1 = y2 - newH;
+      else if (drag.b && !drag.t) y2 = y1 + newH;
+      else {
+        const cy = (y1 + y2) * 0.5;
+        y1 = cy - newH * 0.5;
+        y2 = y1 + newH;
+      }
+      if (y1 < 0) {
+        y1 = 0;
+        y2 = newH;
+      }
+      if (y2 > canvasCssH) {
+        y2 = canvasCssH;
+        y1 = y2 - newH;
+      }
+      h = y2 - y1;
+    }
+
+    glass.xCss = x1;
+    glass.yCss = y1;
+    glass.wCss = x2 - x1;
+    glass.hCss = h;
+    clampGlass(canvasCssW, canvasCssH);
   }
 
   function render() {
@@ -317,7 +555,8 @@ async function main() {
     requestAnimationFrame(() => {
       rafPending = false;
       try {
-        configureIfNeeded();
+        ensureCanvasConfigured();
+        writeUniforms();
         render();
       } catch (e) {
         stopped = true;
@@ -333,6 +572,63 @@ async function main() {
     console.error("[webgpu] uncapturederror:", ev.error?.message || ev.error);
     showFallback(`GPU 错误：${ev.error?.message || ev.error}`);
   };
+
+  // --- Pointer interactions: drag to move; drag edges/corners to resize. ---
+  const onPointerDown = (ev) => {
+    if (stopped) return;
+    if (!ev.isPrimary || ev.button !== 0) return;
+    ensureCanvasConfigured();
+
+    const p = pointerPosCss(ev);
+    const hit = hitTestGlass(p.x, p.y);
+    // Ignore clicks too far from the glass.
+    if (hit.d > RESIZE_MARGIN || !hit.mode) return;
+
+    canvas.setPointerCapture(ev.pointerId);
+    startDrag(hit.mode, ev.pointerId, p.x, p.y, hit.edges);
+    canvas.style.cursor = cursorForHit(hit.mode, hit.edges) || canvas.style.cursor;
+    ev.preventDefault();
+    requestRender();
+  };
+
+  const onPointerMove = (ev) => {
+    if (stopped) return;
+    const p = pointerPosCss(ev);
+    ensureCanvasConfigured();
+
+    if (!drag.active) {
+      const hit = hitTestGlass(p.x, p.y);
+      const c = cursorForHit(hit.mode, hit.edges);
+      canvas.style.cursor = c || "default";
+      return;
+    }
+
+    if (ev.pointerId !== drag.pointerId) return;
+    if (drag.mode === "move") applyMove(p.x, p.y);
+    else applyResize(p.x, p.y);
+
+    ev.preventDefault();
+    requestRender();
+  };
+
+  const onPointerUp = (ev) => {
+    try {
+      if (canvas.hasPointerCapture?.(ev.pointerId)) canvas.releasePointerCapture(ev.pointerId);
+    } catch {
+      // ignore
+    }
+    endDrag(ev.pointerId);
+    requestRender();
+  };
+
+  canvas.addEventListener("pointerdown", onPointerDown, { passive: false });
+  canvas.addEventListener("pointermove", onPointerMove, { passive: false });
+  canvas.addEventListener("pointerup", onPointerUp, { passive: false });
+  canvas.addEventListener("pointercancel", onPointerUp, { passive: false });
+  canvas.addEventListener("lostpointercapture", (ev) => {
+    endDrag(ev.pointerId);
+    requestRender();
+  });
 
   window.addEventListener("resize", requestRender);
   requestRender();

@@ -28,6 +28,8 @@ canvas {
   width: 100%;
   height: 100%;
   display: block;
+  /* Pointer-driven drag/resize should not be hijacked by page scrolling on touch devices. */
+  touch-action: none;
 }
 
 /* Ensure the HTML `hidden` attribute always works, even if we style the element. */
