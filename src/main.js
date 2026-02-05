@@ -244,9 +244,11 @@ async function main() {
     const overlayR = overlayH * 0.5;
     const strokeW = 0;
     // Static refraction parameters (device px).
-    // Increase these to make the distortion more obvious (still static).
+    // `refractionPx`: edge max offset in pixels.
+    // `depth`: how far the edge distortion penetrates inward (0..1, relative to radius).
     const refractionPx = 56 * dpr;
-    const noiseScale = 3.5;
+    const depth = 0.35;
+    const depthPx = overlayR * depth;
 
     // Pack uniforms: 4 vec4 = 16 floats.
     const f = new Float32Array(16);
@@ -263,9 +265,9 @@ async function main() {
     // radii0: overlayRadiusPx, strokeWidthPx, padding, padding
     f[8] = overlayR;
     f[9] = strokeW;
-    // radii0.zw: refractionPx, noiseScale
+    // radii0.zw: refractionPx, depthPx
     f[10] = refractionPx;
-    f[11] = noiseScale;
+    f[11] = depthPx;
     // overlayColor: rgba
     f[12] = 1.0;
     f[13] = 1.0;

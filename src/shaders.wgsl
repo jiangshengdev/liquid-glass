@@ -3,7 +3,7 @@ struct Uniforms {
   canvas0: vec4f,
   // overlayX, overlayY, overlayW, overlayH (pixels, in canvas space)
   overlay0: vec4f,
-  // overlayRadiusPx, strokeWidthPx, padding, padding
+  // overlayRadiusPx, strokeWidthPx, refractionPx, depthPx
   radii0: vec4f,
   // overlay RGBA (non-premultiplied)
   overlayColor: vec4f,
@@ -74,47 +74,6 @@ fn backgroundColorAtUv(uv: vec2f) -> vec3f {
   return textureSample(leftImage, imgSamp, imgUv).rgb;
 }
 
-fn hash21(p: vec2f) -> f32 {
-  return fract(sin(dot(p, vec2f(127.1, 311.7))) * 43758.5453123);
-}
-
-fn value_noise(p: vec2f) -> f32 {
-  let i = floor(p);
-  let f = fract(p);
-  let u = f * f * (3.0 - 2.0 * f);
-
-  let a = hash21(i);
-  let b = hash21(i + vec2f(1.0, 0.0));
-  let c = hash21(i + vec2f(0.0, 1.0));
-  let d = hash21(i + vec2f(1.0, 1.0));
-
-  let x1 = mix(a, b, u.x);
-  let x2 = mix(c, d, u.x);
-  return mix(x1, x2, u.y);
-}
-
-fn fbm(p: vec2f) -> f32 {
-  // Static FBM: fixed octaves, unrolled for compatibility (Safari/WebKit).
-  var v = 0.0;
-  var a = 0.5;
-  var q = p;
-
-  v += a * value_noise(q);
-  q = q * 2.0 + vec2f(17.0, 9.0);
-  a *= 0.5;
-
-  v += a * value_noise(q);
-  q = q * 2.0 + vec2f(17.0, 9.0);
-  a *= 0.5;
-
-  v += a * value_noise(q);
-  q = q * 2.0 + vec2f(17.0, 9.0);
-  a *= 0.5;
-
-  v += a * value_noise(q);
-  return v;
-}
-
 @fragment
 fn fs_background(in: VSOut) -> @location(0) vec4f {
   return vec4f(backgroundColorAtUv(in.uv), 1.0);
@@ -131,29 +90,33 @@ fn fs_overlay(in: VSOut) -> @location(0) vec4f {
   let sz = u.overlay0.zw;
   let center = r0 + sz * 0.5;
   let half = sz * 0.5;
-  let d = sd_round_rect_px(fragPx - center, half, u.radii0.x);
+  let pPx = fragPx - center;
+  let d = sd_round_rect_px(pPx, half, u.radii0.x);
 
   let aa = 1.25;
   // Use increasing edges for portability across implementations.
   let fill = 1.0 - smoothstep(-aa, aa, d);
 
-  // Static refraction: offset the background sampling UV once, using procedural noise.
+  // Static refraction (no noise): a regular lens-like field.
+  // Goal: center ~ unchanged, edges bend in an ordered way (along the SDF normal).
   // Parameters:
-  // - u.radii0.z: refraction strength (pixels)
-  // - u.radii0.w: noise scale (dimensionless, in overlay-local UV space)
-  let localUv = (fragPx - r0) / max(sz, vec2f(0.0001));
-  let localCentered = localUv - vec2f(0.5);
-  // Make distortion a bit stronger near the long edges (lens-like).
-  let aspect = sz.x / max(1.0, sz.y);
-  let r = length(localCentered * vec2f(aspect, 1.0));
-  let lens = sat((r - 0.05) / 0.55);
+  // - u.radii0.z: Refraction (max offset, in pixels at the edge)
+  // - u.radii0.w: depthPx (how far the edge distortion penetrates inward)
+  let eps = 1.0;
+  let ddx = sd_round_rect_px(pPx + vec2f(eps, 0.0), half, u.radii0.x) - sd_round_rect_px(pPx - vec2f(eps, 0.0), half, u.radii0.x);
+  let ddy = sd_round_rect_px(pPx + vec2f(0.0, eps), half, u.radii0.x) - sd_round_rect_px(pPx - vec2f(0.0, eps), half, u.radii0.x);
+  let grad = vec2f(ddx, ddy);
+  let nrm = grad / max(1e-6, length(grad));
 
-  let p = localUv * u.radii0.w;
-  // Expand fbm from roughly [0..1) to [-1..1) to make the refraction clearly visible.
-  let n = vec2f(fbm(p), fbm(p + vec2f(7.13, 31.7))) * 2.0 - vec2f(1.0);
-  let strength = mix(0.20, 1.0, lens * lens);
-  let offsetUv = n * (u.radii0.z / max(vec2f(1.0), canvasSize)) * strength;
-  let uvRefract = clamp(uv + offsetUv, vec2f(0.0), vec2f(1.0));
+  // 0 at/beyond depthPx from the edge, 1 at the edge. This creates a stable center region.
+  let distIn = max(0.0, -d);
+  let depthPx = max(1.0, u.radii0.w);
+  let edge = sat(1.0 - distIn / depthPx);
+  let edge2 = edge * edge;
+
+  // Sign: sample slightly "towards the lens center" (convex/magnifying feel).
+  let offsetPx = (-nrm) * (u.radii0.z * edge2);
+  let uvRefract = clamp(uv + offsetPx / max(vec2f(1.0), canvasSize), vec2f(0.0), vec2f(1.0));
 
   // Refraction = sample the background at an offset UV (no blur, no animation).
   let refracted = backgroundColorAtUv(uvRefract);
