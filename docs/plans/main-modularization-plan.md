@@ -56,7 +56,7 @@
 
 ## 验证记录
 
-- [x] `npm run test`
+- [x] `npm run test`（Vitest）
 - [x] `npm run lint`
 - [x] `npm run build`
 

@@ -32,6 +32,13 @@ npm run lint
 npm run build
 ```
 
+测试由 Vitest 驱动：
+
+```bash
+npm run test
+npm run test:watch
+```
+
 ## 交互
 
 - 拖拽玻璃内部：移动位置

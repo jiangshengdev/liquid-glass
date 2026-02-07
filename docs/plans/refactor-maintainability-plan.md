@@ -96,6 +96,7 @@
 - [x] 批次 D：类型拆分到 `types/common.ts`、`types/state.ts`、`types/renderer.ts`、`types/interaction.ts`。
 - [x] 批次 E：补充单元测试与文档更新。
 - [x] 附加清理：移除 `Renderer` 未使用公开方法 `recreateOffscreenTargets()`。
+- [x] Vitest 迁移：测试入口改为 `vitest run`，用例改写为 `describe/it/expect` 结构。
 
 ## 公共接口/类型变更（明确）
 
@@ -110,7 +111,7 @@
 
 ## 测试计划与验收场景
 
-- 单元测试（新增，使用 `jiti tests/run-unit-tests.ts` 运行 TypeScript 用例）：
+- 单元测试（新增，使用 `vitest run` 运行）：
   - `state/glassState`：最小尺寸约束、边界夹取、`height <= width` 约束。
   - `interaction/hitTest`：内部移动命中、边缘/角命中优先级、cursor 映射。
   - `gpu/uniforms`：24-float 布局位置、DPR 缩放、alpha/光照参数映射。
@@ -134,5 +135,5 @@
 ## 假设与默认值（已锁定）
 
 - 默认保持现有参数与视觉：`PARAMS`、WGSL 算法、交互体验不变。
-- 默认不新增测试框架依赖，使用仓库现有 `jiti` 运行轻量单测。
+- 默认使用 Vitest 作为项目测试运行器（不在本阶段增加覆盖率阈值与 CI 门槛）。
 - 默认不调整目录外资源，不改 HTML/CSS 结构，不做 API 对外暴露。

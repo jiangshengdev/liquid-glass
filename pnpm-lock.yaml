@@ -20,9 +20,6 @@ importers:
       globals:
         specifier: ^17.3.0
         version: 17.3.0
-      jiti:
-        specifier: ^2.6.1
-        version: 2.6.1
       prettier:
         specifier: 3.8.1
         version: 3.8.1
@@ -1271,7 +1268,8 @@ snapshots:
 
   isexe@2.0.0: {}
 
-  jiti@2.6.1: {}
+  jiti@2.6.1:
+    optional: true
 
   json-buffer@3.0.1: {}
 
