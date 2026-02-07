@@ -8,9 +8,8 @@ export function showFallback(reason?: unknown): void {
   fallbackElement.hidden = false;
   if (!reason) return;
 
-  const fallbackCard = fallbackElement.querySelector<HTMLDivElement>(
-    ".fallback-card",
-  );
+  const fallbackCard =
+    fallbackElement.querySelector<HTMLDivElement>(".fallback-card");
   if (!fallbackCard || fallbackCard.querySelector("#fallback-debug")) return;
 
   const debugPre = document.createElement("pre");
