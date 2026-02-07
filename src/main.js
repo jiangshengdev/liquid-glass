@@ -1,5 +1,5 @@
 import wgsl from "./shaders.wgsl?raw";
-import { loadBitmap, createImageTexture } from "./assets/image.js";
+import { loadBitmap, createImageTexture } from "./utils/image.js";
 import { PARAMS, MIN_W, MIN_H, RESIZE_MARGIN } from "./config/params.js";
 import { createRenderer } from "./gpu/renderer.js";
 import { attachPointerHandlers } from "./interaction/pointer.js";
