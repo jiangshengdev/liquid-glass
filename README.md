@@ -1,4 +1,4 @@
-# Glass-effect playground（WebGPU：静态折射 + Frost 高斯模糊）
+# liquid-glass（WebGPU：静态折射 + Frost 高斯模糊）
 
 目标：用纯 WebGPU 做一个可交互的“玻璃胶囊”探索 Demo：
 - 静态、规则的折射（中心基本不变，边缘有秩序偏折）
@@ -6,7 +6,7 @@
 - 不引入任何 time/动画/噪声（保持完全静态）
 
 Figma：
-- 文件：Glass-effect playground--Community
+- 文件：liquid-glass
 - 节点：`3974:2581`（section）
 - 背景参考：`3986:2666`（右侧背景区域）
 - 菜单组件：`4009:1821`
