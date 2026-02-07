@@ -28,7 +28,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  let adapter: GPUAdapter | null = null;
+  let adapter: GPUAdapter | null;
   try {
     adapter = await gpu.requestAdapter();
   } catch (err) {

@@ -40,6 +40,66 @@ interface GPUUncapturedErrorEvent extends Event {
   readonly error: GPUErrorLike;
 }
 
+type GPUSampler = { readonly __brand: "GPUSampler" };
+type GPUTextureView = { readonly __brand: "GPUTextureView" };
+type GPUBuffer = { readonly __brand: "GPUBuffer" };
+type GPUBindGroupLayout = { readonly __brand: "GPUBindGroupLayout" };
+type GPUBindGroup = { readonly __brand: "GPUBindGroup" };
+type GPUPipelineLayout = { readonly __brand: "GPUPipelineLayout" };
+type GPURenderPipeline = { readonly __brand: "GPURenderPipeline" };
+type GPUCommandBuffer = { readonly __brand: "GPUCommandBuffer" };
+
+interface GPUTexture {
+  createView(): GPUTextureView;
+  destroy(): void;
+}
+
+interface GPUShaderModule {
+  getCompilationInfo(): Promise<GPUCompilationInfo>;
+}
+
+interface GPUCompilationInfo {
+  readonly messages: GPUCompilationMessage[];
+}
+
+interface GPUCompilationMessage {
+  readonly type: "error" | "warning" | "info";
+  readonly message: string;
+  readonly lineNum: number;
+  readonly linePos: number;
+}
+
+interface GPUCommandEncoder {
+  beginRenderPass(descriptor: Record<string, unknown>): GPURenderPassEncoder;
+  finish(): GPUCommandBuffer;
+}
+
+interface GPURenderPassEncoder {
+  setBindGroup(index: number, bindGroup: GPUBindGroup): void;
+  setPipeline(pipeline: GPURenderPipeline): void;
+  draw(vertexCount: number): void;
+  end(): void;
+}
+
+interface GPUQueue {
+  writeBuffer(
+    buffer: GPUBuffer,
+    bufferOffset: number,
+    data: BufferSource,
+  ): void;
+  copyExternalImageToTexture(
+    source: { source: ImageBitmap },
+    destination: { texture: GPUTexture },
+    copySize: { width: number; height: number },
+  ): void;
+  submit(commandBuffers: GPUCommandBuffer[]): void;
+}
+
+interface GPUCanvasContext {
+  configure(configuration: Record<string, unknown>): void;
+  getCurrentTexture(): GPUTexture;
+}
+
 interface GPUDevice {
   readonly queue: GPUQueue;
   readonly lost: Promise<GPUDeviceLostInfo>;
@@ -57,73 +117,6 @@ interface GPUDevice {
   createCommandEncoder(): GPUCommandEncoder;
   pushErrorScope(filter: GPUErrorFilter): void;
   popErrorScope(): Promise<GPUErrorLike | null>;
-}
-
-interface GPUQueue {
-  writeBuffer(
-    buffer: GPUBuffer,
-    bufferOffset: number,
-    data: BufferSource,
-  ): void;
-  copyExternalImageToTexture(
-    source: { source: ImageBitmap },
-    destination: { texture: GPUTexture },
-    copySize: { width: number; height: number },
-  ): void;
-  submit(commandBuffers: GPUCommandBuffer[]): void;
-}
-
-interface GPUSampler {}
-
-interface GPUTexture {
-  createView(): GPUTextureView;
-  destroy(): void;
-}
-
-interface GPUTextureView {}
-
-interface GPUShaderModule {
-  getCompilationInfo(): Promise<GPUCompilationInfo>;
-}
-
-interface GPUCompilationInfo {
-  readonly messages: GPUCompilationMessage[];
-}
-
-interface GPUCompilationMessage {
-  readonly type: "error" | "warning" | "info";
-  readonly message: string;
-  readonly lineNum: number;
-  readonly linePos: number;
-}
-
-interface GPUBuffer {}
-
-interface GPUBindGroupLayout {}
-
-interface GPUBindGroup {}
-
-interface GPUPipelineLayout {}
-
-interface GPURenderPipeline {}
-
-interface GPUCommandBuffer {}
-
-interface GPUCommandEncoder {
-  beginRenderPass(descriptor: Record<string, unknown>): GPURenderPassEncoder;
-  finish(): GPUCommandBuffer;
-}
-
-interface GPURenderPassEncoder {
-  setBindGroup(index: number, bindGroup: GPUBindGroup): void;
-  setPipeline(pipeline: GPURenderPipeline): void;
-  draw(vertexCount: number): void;
-  end(): void;
-}
-
-interface GPUCanvasContext {
-  configure(configuration: Record<string, unknown>): void;
-  getCurrentTexture(): GPUTexture;
 }
 
 interface Navigator {
