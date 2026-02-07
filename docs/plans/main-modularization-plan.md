@@ -1,10 +1,12 @@
 # WebGPU main.js 模块化拆分方案（中等粒度）
 
 ## 简要摘要
+
 将 `/Users/jiangsheng/GitHub/liquid-glass/src/main.js` 按“启动/渲染/交互/状态/工具”拆成 7 个模块，**不改变现有视觉效果、交互行为和运行方式**（仍由 Vite + ESM 启动）。
 目标是把单文件职责清晰化，后续调参（如 `PARAMS.frost`）和功能扩展（更多控件/渲染 pass）更容易维护。
 
 ## 公开接口与模块边界（新增）
+
 > 这里“公开接口”指模块间导出 API（项目外部入口不变，仍是 `src/main.js`）。
 
 1. `/Users/jiangsheng/GitHub/liquid-glass/src/main.js`（入口编排）
@@ -39,6 +41,7 @@
    - 导出：`loadBitmap(url)`、`createImageTexture(device, queue, bitmap)`
 
 ## 详细实施步骤（决策已定）
+
 1. **先抽“纯工具+配置”**：`showFallback`、数学函数、`PARAMS` 和交互常量迁移到独立模块（零副作用、低风险）。
 2. **再抽状态层**：把 `glass/drag/canvas` 相关可变状态集中到 `createGlassState()`，并把移动/缩放逻辑作为状态方法暴露。
 3. **抽渲染层**：把 pipeline、bind group、offscreen texture 生命周期、render pass 编码迁入 `createRenderer()`；入口仅调用高层 API。
@@ -48,6 +51,7 @@
 7. **轻量注释**：仅在跨模块状态同步点添加必要注释（如 `sceneDirty` 的触发时机）。
 
 ## 测试与验收场景
+
 1. **启动与兼容**
    - `navigator.gpu` 不可用时，fallback 卡片与 debug 文案与当前一致。
    - `requestAdapter/requestDevice` 失败路径行为不变。
@@ -64,6 +68,7 @@
    - `npm run build` 通过；`npm run dev` 启动无模块循环依赖错误。
 
 ## 默认假设（已锁定）
+
 - 使用中等拆分，控制在约 7 个模块，不做过度抽象。
 - 不引入 TypeScript、不新增第三方库、不改变现有 shader 文件与资产路径。
 - 不改 UI/交互产品行为，仅做结构性重构。
@@ -76,6 +81,7 @@
 ## 当前状态（更新于 2026-02-07）
 
 ### 实施进度
+
 - [x] 步骤 1：纯工具+配置拆分完成（`utils/`、`config/`）。
 - [x] 步骤 2：状态层拆分完成（`state/glassState.js`）。
 - [x] 步骤 3：渲染层拆分完成（`gpu/renderer.js`）。
@@ -85,10 +91,12 @@
 - [x] 步骤 7：关键逻辑保留了必要注释（如 resize/rounded hit-test 等）。
 
 ### 验证进度
+
 - [x] 已执行：`npm run build`（通过）。
 - [ ] 待补充：手工交互回归（移动/缩放/边角光标）与 Safari WebGPU 实机验证。
 
 ### 变更清单（已落地）
+
 - 新增：`/Users/jiangsheng/GitHub/liquid-glass/src/utils/dom.js`
 - 新增：`/Users/jiangsheng/GitHub/liquid-glass/src/utils/math.js`
 - 新增：`/Users/jiangsheng/GitHub/liquid-glass/src/config/params.js`

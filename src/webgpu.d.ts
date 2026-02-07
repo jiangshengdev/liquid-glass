@@ -48,7 +48,9 @@ interface GPUDevice {
   createTexture(descriptor: Record<string, unknown>): GPUTexture;
   createShaderModule(descriptor: { code: string }): GPUShaderModule;
   createBuffer(descriptor: Record<string, unknown>): GPUBuffer;
-  createBindGroupLayout(descriptor: Record<string, unknown>): GPUBindGroupLayout;
+  createBindGroupLayout(
+    descriptor: Record<string, unknown>,
+  ): GPUBindGroupLayout;
   createBindGroup(descriptor: Record<string, unknown>): GPUBindGroup;
   createPipelineLayout(descriptor: Record<string, unknown>): GPUPipelineLayout;
   createRenderPipeline(descriptor: Record<string, unknown>): GPURenderPipeline;
@@ -58,7 +60,11 @@ interface GPUDevice {
 }
 
 interface GPUQueue {
-  writeBuffer(buffer: GPUBuffer, bufferOffset: number, data: BufferSource): void;
+  writeBuffer(
+    buffer: GPUBuffer,
+    bufferOffset: number,
+    data: BufferSource,
+  ): void;
   copyExternalImageToTexture(
     source: { source: ImageBitmap },
     destination: { texture: GPUTexture },

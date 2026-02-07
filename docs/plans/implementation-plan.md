@@ -26,4 +26,4 @@
 [x] `src/main.js`：不引入 RAF 动画/鼠标交互；只在初始化 + resize 时写 uniforms 并渲染一次。  
 [x] `src/main.js`：把折射参数写为常量（`Refraction`、`depth`、`dispersion`、`frost`、`splay`、`alpha`），并放在统一位置便于改（本阶段未实现的参数先占位为 0）。  
 [x] `src/main.js`：加固“出错即停”：WGSL 编译信息出现 error 或 errorScope 捕获到 validation/OOM 时直接 fallback 并 return；运行期 `device.onuncapturederror` 触发后停止后续渲染。  
-[x] 手工验收：Safari 26/TP 打开页面，确认底图 `cover`；玻璃圆角矩形居中完整显示；**中心基本不变、边缘出现一致方向偏折**；控制台无持续报错/刷屏。  
+[x] 手工验收：Safari 26/TP 打开页面，确认底图 `cover`；玻璃圆角矩形居中完整显示；**中心基本不变、边缘出现一致方向偏折**；控制台无持续报错/刷屏。

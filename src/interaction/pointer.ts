@@ -1,4 +1,9 @@
-import type { DragMode, GlassRect, PointerHandlersDeps, ResizeEdges } from "../types";
+import type {
+  DragMode,
+  GlassRect,
+  PointerHandlersDeps,
+  ResizeEdges,
+} from "../types";
 import { sdRoundRect } from "../utils/math";
 
 interface HitResult {
@@ -6,12 +11,20 @@ interface HitResult {
   edges: ResizeEdges;
 }
 
-function pointerPosCss(canvas: HTMLCanvasElement, ev: PointerEvent): { x: number; y: number } {
+function pointerPosCss(
+  canvas: HTMLCanvasElement,
+  ev: PointerEvent,
+): { x: number; y: number } {
   const r = canvas.getBoundingClientRect();
   return { x: ev.clientX - r.left, y: ev.clientY - r.top };
 }
 
-function hitTestGlass(glass: GlassRect, px: number, py: number, resizeMargin: number): HitResult {
+function hitTestGlass(
+  glass: GlassRect,
+  px: number,
+  py: number,
+  resizeMargin: number,
+): HitResult {
   const cx = glass.xCss + glass.wCss * 0.5;
   const cy = glass.yCss + glass.hCss * 0.5;
   const halfW = glass.wCss * 0.5;
@@ -99,7 +112,8 @@ export function attachPointerHandlers({
     canvas.setPointerCapture(ev.pointerId);
     state.startDrag(hit.mode, ev.pointerId, p.x, p.y, hit.edges);
     updateGlassUi(true);
-    canvas.style.cursor = cursorForHit(hit.mode, hit.edges) || canvas.style.cursor;
+    canvas.style.cursor =
+      cursorForHit(hit.mode, hit.edges) || canvas.style.cursor;
     ev.preventDefault();
     requestRender();
   };
@@ -127,7 +141,8 @@ export function attachPointerHandlers({
 
   const onPointerUp = (ev: PointerEvent): void => {
     try {
-      if (canvas.hasPointerCapture(ev.pointerId)) canvas.releasePointerCapture(ev.pointerId);
+      if (canvas.hasPointerCapture(ev.pointerId))
+        canvas.releasePointerCapture(ev.pointerId);
     } catch {
       // ignore
     }

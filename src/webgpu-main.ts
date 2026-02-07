@@ -22,7 +22,9 @@ async function main(): Promise<void> {
   log("navigator.gpu =", gpu ?? null);
 
   if (!gpu) {
-    showFallback("navigator.gpu 不存在：通常是未开启 WebGPU 实验特性，或不是安全上下文（需 https:// 或 http://localhost）。");
+    showFallback(
+      "navigator.gpu 不存在：通常是未开启 WebGPU 实验特性，或不是安全上下文（需 https:// 或 http://localhost）。",
+    );
     return;
   }
 
@@ -35,7 +37,9 @@ async function main(): Promise<void> {
   }
 
   if (!adapter) {
-    showFallback("requestAdapter() 返回 null：通常是 WebGPU 未开启/被策略禁用/不在安全上下文/或系统不支持该实现。");
+    showFallback(
+      "requestAdapter() 返回 null：通常是 WebGPU 未开启/被策略禁用/不在安全上下文/或系统不支持该实现。",
+    );
     return;
   }
 
@@ -69,14 +73,18 @@ async function main(): Promise<void> {
 
   const ctx = canvas.getContext("webgpu") as GPUCanvasContext | null;
   if (!ctx) {
-    showFallback("canvas.getContext(webgpu) 返回 null：可能是 WebGPU 未启用，或页面不是安全上下文。");
+    showFallback(
+      "canvas.getContext(webgpu) 返回 null：可能是 WebGPU 未启用，或页面不是安全上下文。",
+    );
     return;
   }
 
   const glassUiNode = document.getElementById("glass-ui");
   const glassUi = glassUiNode instanceof HTMLDivElement ? glassUiNode : null;
 
-  const presentationFormat = gpu.getPreferredCanvasFormat ? gpu.getPreferredCanvasFormat() : ("bgra8unorm" as GPUTextureFormat);
+  const presentationFormat = gpu.getPreferredCanvasFormat
+    ? gpu.getPreferredCanvasFormat()
+    : ("bgra8unorm" as GPUTextureFormat);
   log("presentationFormat =", presentationFormat);
 
   const sampler = device.createSampler({
@@ -117,7 +125,9 @@ async function main(): Promise<void> {
         console.groupEnd?.();
 
         if (hasError) {
-          showFallback("WGSL 编译失败：请查看控制台中的 shader compilation info。");
+          showFallback(
+            "WGSL 编译失败：请查看控制台中的 shader compilation info。",
+          );
           return;
         }
       } else {
@@ -168,10 +178,13 @@ async function main(): Promise<void> {
     const validationError = await device.popErrorScope();
 
     if (oomError) console.error("[webgpu] OOM error:", oomError);
-    if (validationError) console.error("[webgpu] Validation error:", validationError);
+    if (validationError)
+      console.error("[webgpu] Validation error:", validationError);
 
     if (oomError || validationError) {
-      const msg = (validationError ?? oomError)?.message ?? String(validationError ?? oomError);
+      const msg =
+        (validationError ?? oomError)?.message ??
+        String(validationError ?? oomError);
       showFallback(`GPU 校验失败：${msg}`);
       return;
     }

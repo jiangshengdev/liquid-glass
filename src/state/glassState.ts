@@ -1,4 +1,11 @@
-import type { CanvasState, DragMode, DragState, GlassRect, GlassState, ResizeEdges } from "../types";
+import type {
+  CanvasState,
+  DragMode,
+  DragState,
+  GlassRect,
+  GlassState,
+  ResizeEdges,
+} from "../types";
 import { clamp } from "../utils/math";
 
 interface CreateGlassStateOptions {
@@ -6,7 +13,10 @@ interface CreateGlassStateOptions {
   minH: number;
 }
 
-export function createGlassState({ minW, minH }: CreateGlassStateOptions): GlassState {
+export function createGlassState({
+  minW,
+  minH,
+}: CreateGlassStateOptions): GlassState {
   // Persistent glass rect (CSS px) so resizing the window does not reset placement.
   const glass: GlassRect = { xCss: 0, yCss: 0, wCss: 0, hCss: 0 };
   let glassInited = false;
@@ -56,8 +66,15 @@ export function createGlassState({ minW, minH }: CreateGlassStateOptions): Glass
     glass.yCss = clamp(glass.yCss, 0, Math.max(0, cssH - glass.hCss));
   }
 
-  function updateCanvasState({ pxW, pxH, dpr, cssW, cssH }: CanvasState): boolean {
-    const changed = pxW !== canvas.pxW || pxH !== canvas.pxH || dpr !== canvas.dpr;
+  function updateCanvasState({
+    pxW,
+    pxH,
+    dpr,
+    cssW,
+    cssH,
+  }: CanvasState): boolean {
+    const changed =
+      pxW !== canvas.pxW || pxH !== canvas.pxH || dpr !== canvas.dpr;
     canvas.pxW = pxW;
     canvas.pxH = pxH;
     canvas.dpr = dpr;
@@ -69,7 +86,13 @@ export function createGlassState({ minW, minH }: CreateGlassStateOptions): Glass
     return changed;
   }
 
-  function startDrag(mode: DragMode, pointerId: number, px: number, py: number, edges?: Partial<ResizeEdges>): void {
+  function startDrag(
+    mode: DragMode,
+    pointerId: number,
+    px: number,
+    py: number,
+    edges?: Partial<ResizeEdges>,
+  ): void {
     drag.active = true;
     drag.mode = mode;
     drag.pointerId = pointerId;

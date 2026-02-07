@@ -110,7 +110,14 @@ body {
   min-height: 100%;
   background: #0b0b0f;
   color: rgba(255, 255, 255, 0.92);
-  font: 14px/1.35 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  font:
+    14px/1.35 ui-sans-serif,
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    Helvetica,
+    Arial;
 }
 
 #app {
@@ -151,14 +158,46 @@ canvas {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
-.glass-handle.tl { left: 0; top: 0; transform: translate(-50%, -50%); }
-.glass-handle.tm { left: 50%; top: 0; transform: translate(-50%, -50%); }
-.glass-handle.tr { right: 0; top: 0; transform: translate(50%, -50%); }
-.glass-handle.ml { left: 0; top: 50%; transform: translate(-50%, -50%); }
-.glass-handle.mr { right: 0; top: 50%; transform: translate(50%, -50%); }
-.glass-handle.bl { left: 0; bottom: 0; transform: translate(-50%, 50%); }
-.glass-handle.bm { left: 50%; bottom: 0; transform: translate(-50%, 50%); }
-.glass-handle.br { right: 0; bottom: 0; transform: translate(50%, 50%); }
+.glass-handle.tl {
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+}
+.glass-handle.tm {
+  left: 50%;
+  top: 0;
+  transform: translate(-50%, -50%);
+}
+.glass-handle.tr {
+  right: 0;
+  top: 0;
+  transform: translate(50%, -50%);
+}
+.glass-handle.ml {
+  left: 0;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.glass-handle.mr {
+  right: 0;
+  top: 50%;
+  transform: translate(50%, -50%);
+}
+.glass-handle.bl {
+  left: 0;
+  bottom: 0;
+  transform: translate(-50%, 50%);
+}
+.glass-handle.bm {
+  left: 50%;
+  bottom: 0;
+  transform: translate(-50%, 50%);
+}
+.glass-handle.br {
+  right: 0;
+  bottom: 0;
+  transform: translate(50%, 50%);
+}
 
 [hidden] {
   display: none !important;

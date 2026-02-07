@@ -40,7 +40,13 @@ export interface GlassState {
   canvas: CanvasState;
   clampGlass(cssW: number, cssH: number): void;
   updateCanvasState(next: CanvasState): boolean;
-  startDrag(mode: DragMode, pointerId: number, px: number, py: number, edges?: Partial<ResizeEdges>): void;
+  startDrag(
+    mode: DragMode,
+    pointerId: number,
+    px: number,
+    py: number,
+    edges?: Partial<ResizeEdges>,
+  ): void;
   endDrag(pointerId: number): void;
   applyMove(px: number, py: number): void;
   applyResize(px: number, py: number): void;
