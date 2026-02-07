@@ -1,11 +1,9 @@
+import { describe, expect, it } from "vitest";
+
 import { cursorForHit, hitTestGlass } from "../src/interaction/hitTest";
 import type { GlassRect } from "../src/types/common";
 
-function assert(condition: boolean, message: string): void {
-  if (!condition) throw new Error(message);
-}
-
-export function runHitTestTests(): void {
+describe("interaction/hitTest", () => {
   const glass: GlassRect = {
     xCss: 100,
     yCss: 100,
@@ -14,28 +12,31 @@ export function runHitTestTests(): void {
   };
   const margin = 18;
 
-  const center = hitTestGlass(glass, 280, 160, margin);
-  assert(center.mode === "move", "center point should hit move mode");
+  it("detects center point as move mode", () => {
+    const center = hitTestGlass(glass, 280, 160, margin);
 
-  const leftEdge = hitTestGlass(glass, 100, 160, margin);
-  assert(leftEdge.mode === "resize", "left edge should hit resize mode");
-  assert(leftEdge.edges.l, "left edge should activate left resize handle");
-  assert(
-    cursorForHit(leftEdge.mode, leftEdge.edges) === "ew-resize",
-    "left edge should map to ew-resize cursor",
-  );
+    expect(center.mode).toBe("move");
+  });
 
-  const topLeft = hitTestGlass(glass, 100, 100, margin);
-  assert(topLeft.mode === "resize", "top-left corner should resize");
-  assert(
-    cursorForHit(topLeft.mode, topLeft.edges) === "nwse-resize",
-    "top-left corner should map to nwse-resize cursor",
-  );
+  it("detects left edge as resize and maps ew cursor", () => {
+    const leftEdge = hitTestGlass(glass, 100, 160, margin);
 
-  const outside = hitTestGlass(glass, 10, 10, margin);
-  assert(outside.mode === null, "far outside point should not hit glass");
-  assert(
-    cursorForHit(outside.mode, outside.edges) === "",
-    "outside point should map to empty cursor",
-  );
-}
+    expect(leftEdge.mode).toBe("resize");
+    expect(leftEdge.edges.l).toBe(true);
+    expect(cursorForHit(leftEdge.mode, leftEdge.edges)).toBe("ew-resize");
+  });
+
+  it("detects top-left corner as resize and maps nwse cursor", () => {
+    const topLeft = hitTestGlass(glass, 100, 100, margin);
+
+    expect(topLeft.mode).toBe("resize");
+    expect(cursorForHit(topLeft.mode, topLeft.edges)).toBe("nwse-resize");
+  });
+
+  it("returns null mode and empty cursor for far outside point", () => {
+    const outside = hitTestGlass(glass, 10, 10, margin);
+
+    expect(outside.mode).toBeNull();
+    expect(cursorForHit(outside.mode, outside.edges)).toBe("");
+  });
+});
