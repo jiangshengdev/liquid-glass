@@ -15,7 +15,7 @@ export interface BootstrapResult {
   glassUi: HTMLDivElement | null;
   presentationFormat: GPUTextureFormat;
   sampler: GPUSampler;
-  imageTex: GPUTexture;
+  imageTexture: GPUTexture;
   imageAspect: number;
   shaderModule: GPUShaderModule;
 }
@@ -109,7 +109,7 @@ export async function bootstrapWebGpuApp(): Promise<BootstrapResult | null> {
   log("image bitmap =", { width: bitmap.width, height: bitmap.height });
 
   const imageAspect = bitmap.width / Math.max(1, bitmap.height);
-  const imageTex = createImageTexture(device, queue, bitmap);
+  const imageTexture = createImageTexture(device, queue, bitmap);
 
   const shaderModule = device.createShaderModule({ code: wgsl });
   if (typeof shaderModule.getCompilationInfo === "function") {
@@ -155,7 +155,7 @@ export async function bootstrapWebGpuApp(): Promise<BootstrapResult | null> {
     glassUi,
     presentationFormat,
     sampler,
-    imageTex,
+    imageTexture,
     imageAspect,
     shaderModule,
   };

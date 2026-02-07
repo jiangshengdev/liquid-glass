@@ -17,7 +17,7 @@ interface CreatePipelinesOptions {
   module: GPUShaderModule;
   presentationFormat: GPUTextureFormat;
   uniformBuffer: GPUBuffer;
-  imageTex: GPUTexture;
+  imageTexture: GPUTexture;
   sampler: GPUSampler;
 }
 
@@ -26,7 +26,7 @@ export function createPipelines({
   module,
   presentationFormat,
   uniformBuffer,
-  imageTex,
+  imageTexture,
   sampler,
 }: CreatePipelinesOptions): RendererPipelines {
   const uniformBindGroupLayout = device.createBindGroupLayout({
@@ -67,8 +67,8 @@ export function createPipelines({
   const imageBindGroup = device.createBindGroup({
     layout: imageBindGroupLayout,
     entries: [
-      { binding: 0, resource: imageTex.createView() },
-      { binding: 1, resource: imageTex.createView() },
+      { binding: 0, resource: imageTexture.createView() },
+      { binding: 1, resource: imageTexture.createView() },
       { binding: 2, resource: sampler },
     ],
   });

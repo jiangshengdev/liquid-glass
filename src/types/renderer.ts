@@ -14,7 +14,7 @@ export interface RendererDeps {
   canvas: HTMLCanvasElement;
   canvasContext: GPUCanvasContext;
   sampler: GPUSampler;
-  imageTex: GPUTexture;
+  imageTexture: GPUTexture;
   module: GPUShaderModule;
   presentationFormat: GPUTextureFormat;
   imageAspect: number;

@@ -13,7 +13,7 @@ export function createRenderer({
   canvas,
   canvasContext,
   sampler,
-  imageTex,
+  imageTexture,
   module,
   presentationFormat,
   imageAspect,
@@ -34,7 +34,7 @@ export function createRenderer({
     module,
     presentationFormat,
     uniformBuffer,
-    imageTex,
+    imageTexture,
     sampler,
   });
 

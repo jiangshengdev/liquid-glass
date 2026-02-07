@@ -24,7 +24,7 @@ async function main(): Promise<void> {
     glassUi,
     presentationFormat,
     sampler,
-    imageTex,
+    imageTexture,
     imageAspect,
     shaderModule,
   } = bootstrapResult;
@@ -51,7 +51,7 @@ async function main(): Promise<void> {
     canvas,
     canvasContext,
     sampler,
-    imageTex,
+    imageTexture,
     module: shaderModule,
     presentationFormat,
     imageAspect,

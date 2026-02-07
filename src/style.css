@@ -58,49 +58,49 @@ canvas {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
-.glass-handle.tl {
+.glass-handle.top-left {
   left: 0;
   top: 0;
   transform: translate(-50%, -50%);
 }
 
-.glass-handle.tm {
+.glass-handle.top-middle {
   left: 50%;
   top: 0;
   transform: translate(-50%, -50%);
 }
 
-.glass-handle.tr {
+.glass-handle.top-right {
   right: 0;
   top: 0;
   transform: translate(50%, -50%);
 }
 
-.glass-handle.ml {
+.glass-handle.middle-left {
   left: 0;
   top: 50%;
   transform: translate(-50%, -50%);
 }
 
-.glass-handle.mr {
+.glass-handle.middle-right {
   right: 0;
   top: 50%;
   transform: translate(50%, -50%);
 }
 
-.glass-handle.bl {
+.glass-handle.bottom-left {
   left: 0;
   bottom: 0;
   transform: translate(-50%, 50%);
 }
 
-.glass-handle.bm {
+.glass-handle.bottom-middle {
   left: 50%;
   bottom: 0;
   transform: translate(-50%, 50%);
 }
 
-.glass-handle.br {
+.glass-handle.bottom-right {
   right: 0;
   bottom: 0;
   transform: translate(50%, 50%);
