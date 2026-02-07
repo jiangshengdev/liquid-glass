@@ -2,7 +2,7 @@ import { createOffscreenTargets, type OffscreenTargets } from "./offscreenTarget
 import { createPipelines } from "./pipelines";
 import { encodeFinalPass, encodeScenePasses } from "./renderPasses";
 import { packUniforms } from "./uniforms";
-import type { Renderer, RendererDeps } from "../types";
+import type { Renderer, RendererDeps } from "../types/renderer";
 
 export function createRenderer({
   device,

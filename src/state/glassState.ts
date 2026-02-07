@@ -1,11 +1,9 @@
 import type {
   CanvasState,
-  DragMode,
   DragState,
-  GlassRect,
   GlassState,
-  ResizeEdges,
-} from "../types";
+} from "../types/state";
+import type { DragMode, GlassRect, ResizeEdges } from "../types/common";
 import { clamp } from "../utils/math";
 
 interface CreateGlassStateOptions {

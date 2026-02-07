@@ -1,4 +1,4 @@
-import type { DragMode, GlassRect, ResizeEdges } from "../types";
+import type { DragMode, GlassRect, ResizeEdges } from "../types/common";
 import { sdRoundRect } from "../utils/math";
 
 export interface HitResult {

@@ -1,4 +1,5 @@
-import type { Renderer, StoppedRef } from "../types";
+import type { StoppedRef } from "../types/common";
+import type { Renderer } from "../types/renderer";
 import { showFallback } from "../utils/dom";
 
 function errorMessage(err: unknown): string {

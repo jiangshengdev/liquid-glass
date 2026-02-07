@@ -1,4 +1,4 @@
-import type { GlassParams } from "../types";
+import type { GlassParams } from "../types/common";
 
 export interface UniformPackInput {
   canvasPxW: number;

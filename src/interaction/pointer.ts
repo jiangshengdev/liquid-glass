@@ -1,4 +1,4 @@
-import type { PointerHandlersDeps } from "../types";
+import type { PointerHandlersDeps } from "../types/interaction";
 import { cursorForHit, hitTestGlass } from "./hitTest";
 
 function pointerPosCss(
