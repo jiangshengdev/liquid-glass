@@ -8,10 +8,10 @@ export interface ResizeEdges {
 }
 
 export interface GlassRect {
-  xCss: number;
-  yCss: number;
-  wCss: number;
-  hCss: number;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
 }
 
 export interface GlassParams {

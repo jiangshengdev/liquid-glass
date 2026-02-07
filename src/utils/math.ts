@@ -2,20 +2,29 @@ export function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
 
-export function dprClamped(): number {
+export function devicePixelRatioClamped(): number {
   return clamp(window.devicePixelRatio || 1, 1, 2);
 }
 
 export function sdRoundRect(
-  px: number,
-  py: number,
-  halfW: number,
-  halfH: number,
+  pointLeft: number,
+  pointTop: number,
+  halfWidth: number,
+  halfHeight: number,
   radius: number,
 ): number {
-  const qx = Math.abs(px) - (halfW - radius);
-  const qy = Math.abs(py) - (halfH - radius);
-  const mx = Math.max(qx, 0);
-  const my = Math.max(qy, 0);
-  return Math.hypot(mx, my) + Math.min(Math.max(qx, qy), 0) - radius;
+  const horizontalDistanceFromCorner =
+    Math.abs(pointLeft) - (halfWidth - radius);
+  const verticalDistanceFromCorner =
+    Math.abs(pointTop) - (halfHeight - radius);
+  const horizontalDistanceOutside = Math.max(horizontalDistanceFromCorner, 0);
+  const verticalDistanceOutside = Math.max(verticalDistanceFromCorner, 0);
+  return (
+    Math.hypot(horizontalDistanceOutside, verticalDistanceOutside) +
+    Math.min(
+      Math.max(horizontalDistanceFromCorner, verticalDistanceFromCorner),
+      0,
+    ) -
+    radius
+  );
 }

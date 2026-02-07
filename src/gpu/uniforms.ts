@@ -1,14 +1,14 @@
 import type { GlassParams } from "../types/common";
 
 export interface UniformPackInput {
-  canvasPxW: number;
-  canvasPxH: number;
+  canvasWidth: number;
+  canvasHeight: number;
   imageAspect: number;
-  dpr: number;
-  overlayXCss: number;
-  overlayYCss: number;
-  overlayWCss: number;
-  overlayHCss: number;
+  devicePixelRatio: number;
+  overlayLeft: number;
+  overlayTop: number;
+  overlayWidth: number;
+  overlayHeight: number;
   params: GlassParams;
 }
 
@@ -16,35 +16,35 @@ export function packUniforms(
   input: UniformPackInput,
   out: Float32Array = new Float32Array(24),
 ): Float32Array {
-  const overlayX = input.overlayXCss * input.dpr;
-  const overlayY = input.overlayYCss * input.dpr;
-  const overlayW = input.overlayWCss * input.dpr;
-  const overlayH = input.overlayHCss * input.dpr;
-  const overlayR = overlayH * 0.5;
+  const overlayLeft = input.overlayLeft * input.devicePixelRatio;
+  const overlayTop = input.overlayTop * input.devicePixelRatio;
+  const overlayWidth = input.overlayWidth * input.devicePixelRatio;
+  const overlayHeight = input.overlayHeight * input.devicePixelRatio;
+  const overlayRadius = overlayHeight * 0.5;
 
-  const refractionPx = input.params.refraction * input.dpr;
-  const depthPx = overlayR * input.params.depth;
+  const refractionAmount = input.params.refraction * input.devicePixelRatio;
+  const depthAmount = overlayRadius * input.params.depth;
 
-  const frostPx = input.params.frost * input.dpr;
+  const frostAmount = input.params.frost * input.devicePixelRatio;
   const lightAngleRad = (input.params.lightAngleDeg * Math.PI) / 180;
 
   // Pack uniforms: 6 vec4 = 24 floats.
-  out[0] = input.canvasPxW;
-  out[1] = input.canvasPxH;
+  out[0] = input.canvasWidth;
+  out[1] = input.canvasHeight;
   out[2] = input.imageAspect;
   out[3] = 0;
 
-  out[4] = overlayX;
-  out[5] = overlayY;
-  out[6] = overlayW;
-  out[7] = overlayH;
+  out[4] = overlayLeft;
+  out[5] = overlayTop;
+  out[6] = overlayWidth;
+  out[7] = overlayHeight;
 
-  out[8] = overlayR;
+  out[8] = overlayRadius;
   out[9] = 0;
-  out[10] = refractionPx;
-  out[11] = depthPx;
+  out[10] = refractionAmount;
+  out[11] = depthAmount;
 
-  out[12] = frostPx;
+  out[12] = frostAmount;
   out[13] = lightAngleRad;
   out[14] = input.params.lightStrength;
   out[15] = 0;

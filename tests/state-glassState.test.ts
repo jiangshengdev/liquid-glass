@@ -4,50 +4,50 @@ import { createGlassState } from "../src/state/glassState";
 
 describe("state/glassState", () => {
   it("enforces min size and canvas bounds in clampGlass", () => {
-    const state = createGlassState({ minW: 240, minH: 96 });
+    const state = createGlassState({ minWidth: 240, minHeight: 96 });
     state.updateCanvasState({
       pixelWidth: 1200,
       pixelHeight: 700,
-      dpr: 1,
+      devicePixelRatio: 1,
       cssWidth: 1200,
       cssHeight: 700,
     });
 
-    state.glass.wCss = 12;
-    state.glass.hCss = 24;
-    state.glass.xCss = -50;
-    state.glass.yCss = -20;
+    state.glass.width = 12;
+    state.glass.height = 24;
+    state.glass.left = -50;
+    state.glass.top = -20;
     state.clampGlass(1200, 700);
 
-    expect(state.glass.wCss).toBe(240);
-    expect(state.glass.hCss).toBe(96);
-    expect(state.glass.xCss).toBe(0);
-    expect(state.glass.yCss).toBe(0);
+    expect(state.glass.width).toBe(240);
+    expect(state.glass.height).toBe(96);
+    expect(state.glass.left).toBe(0);
+    expect(state.glass.top).toBe(0);
   });
 
   it("keeps capsule constraint (height <= width)", () => {
-    const state = createGlassState({ minW: 240, minH: 96 });
+    const state = createGlassState({ minWidth: 240, minHeight: 96 });
     state.updateCanvasState({
       pixelWidth: 1200,
       pixelHeight: 700,
-      dpr: 1,
+      devicePixelRatio: 1,
       cssWidth: 1200,
       cssHeight: 700,
     });
 
-    state.glass.wCss = 260;
-    state.glass.hCss = 320;
+    state.glass.width = 260;
+    state.glass.height = 320;
     state.clampGlass(1200, 700);
 
-    expect(state.glass.hCss).toBeLessThanOrEqual(state.glass.wCss);
+    expect(state.glass.height).toBeLessThanOrEqual(state.glass.width);
   });
 
   it("keeps resize width at min bound when shrinking too far", () => {
-    const state = createGlassState({ minW: 240, minH: 96 });
+    const state = createGlassState({ minWidth: 240, minHeight: 96 });
     state.updateCanvasState({
       pixelWidth: 1200,
       pixelHeight: 700,
-      dpr: 1,
+      devicePixelRatio: 1,
       cssWidth: 1200,
       cssHeight: 700,
     });
@@ -55,13 +55,16 @@ describe("state/glassState", () => {
     state.startDrag(
       "resize",
       1,
-      state.glass.xCss + state.glass.wCss,
-      state.glass.yCss + state.glass.hCss * 0.5,
+      state.glass.left + state.glass.width,
+      state.glass.top + state.glass.height * 0.5,
       { right: true },
     );
-    state.applyResize(state.drag.startPx - 5000, state.drag.startPy);
+    state.applyResize(
+      state.drag.startPointerLeft - 5000,
+      state.drag.startPointerTop,
+    );
     state.endDrag(1);
 
-    expect(state.glass.wCss).toBe(240);
+    expect(state.glass.width).toBe(240);
   });
 });

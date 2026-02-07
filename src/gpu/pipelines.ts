@@ -6,8 +6,8 @@ export interface RendererPipelines {
   uniformBindGroup: GPUBindGroup;
   imageBindGroup: GPUBindGroup;
   scenePipeline: GPURenderPipeline;
-  blurHPipeline: GPURenderPipeline;
-  blurVPipeline: GPURenderPipeline;
+  blurHorizontalPipeline: GPURenderPipeline;
+  blurVerticalPipeline: GPURenderPipeline;
   presentPipeline: GPURenderPipeline;
   overlayPipeline: GPURenderPipeline;
 }
@@ -88,23 +88,23 @@ export function createPipelines({
     primitive: { topology: "triangle-list" },
   });
 
-  const blurHPipeline = device.createRenderPipeline({
+  const blurHorizontalPipeline = device.createRenderPipeline({
     layout: pipelineLayout,
     vertex: { module, entryPoint: "vs_fullscreen" },
     fragment: {
       module,
-      entryPoint: "fs_blur_h",
+      entryPoint: "fs_blur_horizontal",
       targets: [{ format: OFFSCREEN_FORMAT }],
     },
     primitive: { topology: "triangle-list" },
   });
 
-  const blurVPipeline = device.createRenderPipeline({
+  const blurVerticalPipeline = device.createRenderPipeline({
     layout: pipelineLayout,
     vertex: { module, entryPoint: "vs_fullscreen" },
     fragment: {
       module,
-      entryPoint: "fs_blur_v",
+      entryPoint: "fs_blur_vertical",
       targets: [{ format: OFFSCREEN_FORMAT }],
     },
     primitive: { topology: "triangle-list" },
@@ -154,8 +154,8 @@ export function createPipelines({
     uniformBindGroup,
     imageBindGroup,
     scenePipeline,
-    blurHPipeline,
-    blurVPipeline,
+    blurHorizontalPipeline,
+    blurVerticalPipeline,
     presentPipeline,
     overlayPipeline,
   };

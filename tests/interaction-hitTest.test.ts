@@ -5,10 +5,10 @@ import type { GlassRect } from "../src/types/common";
 
 describe("interaction/hitTest", () => {
   const glass: GlassRect = {
-    xCss: 100,
-    yCss: 100,
-    wCss: 360,
-    hCss: 120,
+    left: 100,
+    top: 100,
+    width: 360,
+    height: 120,
   };
   const margin = 18;
 

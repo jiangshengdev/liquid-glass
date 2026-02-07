@@ -17,14 +17,14 @@ describe("gpu/uniforms", () => {
 
   it("packs expected layout values with DPR scaling", () => {
     const out = packUniforms({
-      canvasPxW: 1280,
-      canvasPxH: 720,
+      canvasWidth: 1280,
+      canvasHeight: 720,
       imageAspect: 16 / 9,
-      dpr: 2,
-      overlayXCss: 100,
-      overlayYCss: 50,
-      overlayWCss: 300,
-      overlayHCss: 120,
+      devicePixelRatio: 2,
+      overlayLeft: 100,
+      overlayTop: 50,
+      overlayWidth: 300,
+      overlayHeight: 120,
       params,
     });
 

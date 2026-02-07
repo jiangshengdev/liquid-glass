@@ -12,12 +12,12 @@ export function encodeScenePasses({
   targets,
   pipelines,
 }: EncodePassOptions): void {
-  // Pass 1: render cover-mapped image into sceneTex.
+  // Pass 1: render cover-mapped image into sceneTexture.
   {
     const scenePass = encoder.beginRenderPass({
       colorAttachments: [
         {
-          view: targets.sceneTex.createView(),
+          view: targets.sceneTexture.createView(),
           clearValue: { r: 0, g: 0, b: 0, a: 1 },
           loadOp: "clear",
           storeOp: "store",
@@ -31,12 +31,12 @@ export function encodeScenePasses({
     scenePass.end();
   }
 
-  // Pass 2: horizontal blur -> blurTexA.
+  // Pass 2: horizontal blur -> horizontalBlurTexture.
   {
     const blurHorizontalPass = encoder.beginRenderPass({
       colorAttachments: [
         {
-          view: targets.blurTexA.createView(),
+          view: targets.horizontalBlurTexture.createView(),
           clearValue: { r: 0, g: 0, b: 0, a: 1 },
           loadOp: "clear",
           storeOp: "store",
@@ -45,17 +45,17 @@ export function encodeScenePasses({
     });
     blurHorizontalPass.setBindGroup(0, pipelines.uniformBindGroup);
     blurHorizontalPass.setBindGroup(1, targets.blurHorizontalBindGroup);
-    blurHorizontalPass.setPipeline(pipelines.blurHPipeline);
+    blurHorizontalPass.setPipeline(pipelines.blurHorizontalPipeline);
     blurHorizontalPass.draw(3);
     blurHorizontalPass.end();
   }
 
-  // Pass 3: vertical blur -> blurTexB.
+  // Pass 3: vertical blur -> verticalBlurTexture.
   {
     const blurVerticalPass = encoder.beginRenderPass({
       colorAttachments: [
         {
-          view: targets.blurTexB.createView(),
+          view: targets.verticalBlurTexture.createView(),
           clearValue: { r: 0, g: 0, b: 0, a: 1 },
           loadOp: "clear",
           storeOp: "store",
@@ -64,7 +64,7 @@ export function encodeScenePasses({
     });
     blurVerticalPass.setBindGroup(0, pipelines.uniformBindGroup);
     blurVerticalPass.setBindGroup(1, targets.blurVerticalBindGroup);
-    blurVerticalPass.setPipeline(pipelines.blurVPipeline);
+    blurVerticalPass.setPipeline(pipelines.blurVerticalPipeline);
     blurVerticalPass.draw(3);
     blurVerticalPass.end();
   }

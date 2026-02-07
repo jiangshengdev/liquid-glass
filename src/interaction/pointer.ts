@@ -1,14 +1,14 @@
 import type { PointerHandlersDeps } from "../types/interaction";
 import { cursorForHit, hitTestGlass } from "./hitTest";
 
-function pointerPosCss(
+function pointerPositionCss(
   canvas: HTMLCanvasElement,
   event: PointerEvent,
-): { x: number; y: number } {
+): { left: number; top: number } {
   const canvasRect = canvas.getBoundingClientRect();
   return {
-    x: event.clientX - canvasRect.left,
-    y: event.clientY - canvasRect.top,
+    left: event.clientX - canvasRect.left,
+    top: event.clientY - canvasRect.top,
   };
 }
 
@@ -27,11 +27,11 @@ export function attachPointerHandlers({
 
     ensureCanvasConfigured();
 
-    const pointerPosition = pointerPosCss(canvas, event);
+    const pointerPosition = pointerPositionCss(canvas, event);
     const hit = hitTestGlass(
       state.glass,
-      pointerPosition.x,
-      pointerPosition.y,
+      pointerPosition.left,
+      pointerPosition.top,
       resizeMargin,
     );
     if (!hit.mode) return;
@@ -40,8 +40,8 @@ export function attachPointerHandlers({
     state.startDrag(
       hit.mode,
       event.pointerId,
-      pointerPosition.x,
-      pointerPosition.y,
+      pointerPosition.left,
+      pointerPosition.top,
       hit.edges,
     );
     updateGlassUi(true);
@@ -53,14 +53,14 @@ export function attachPointerHandlers({
 
   const onPointerMove = (event: PointerEvent): void => {
     if (stoppedRef.value) return;
-    const pointerPosition = pointerPosCss(canvas, event);
+    const pointerPosition = pointerPositionCss(canvas, event);
     ensureCanvasConfigured();
 
     if (!state.drag.active) {
       const hit = hitTestGlass(
         state.glass,
-        pointerPosition.x,
-        pointerPosition.y,
+        pointerPosition.left,
+        pointerPosition.top,
         resizeMargin,
       );
       const cursor = cursorForHit(hit.mode, hit.edges);
@@ -71,8 +71,8 @@ export function attachPointerHandlers({
 
     if (event.pointerId !== state.drag.pointerId) return;
     if (state.drag.mode === "move")
-      state.applyMove(pointerPosition.x, pointerPosition.y);
-    else state.applyResize(pointerPosition.x, pointerPosition.y);
+      state.applyMove(pointerPosition.left, pointerPosition.top);
+    else state.applyResize(pointerPosition.left, pointerPosition.top);
 
     event.preventDefault();
     requestRender();

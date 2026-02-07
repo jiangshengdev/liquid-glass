@@ -1,9 +1,9 @@
 import { OFFSCREEN_FORMAT } from "../config/params";
 
 export interface OffscreenTargets {
-  sceneTex: GPUTexture;
-  blurTexA: GPUTexture;
-  blurTexB: GPUTexture;
+  sceneTexture: GPUTexture;
+  horizontalBlurTexture: GPUTexture;
+  verticalBlurTexture: GPUTexture;
   blurHorizontalBindGroup: GPUBindGroup;
   blurVerticalBindGroup: GPUBindGroup;
   presentBindGroup: GPUBindGroup;
@@ -49,9 +49,9 @@ export function destroyOffscreenTargets(
   targets: OffscreenTargets | null,
 ): void {
   if (!targets) return;
-  destroyTexture(targets.sceneTex);
-  destroyTexture(targets.blurTexA);
-  destroyTexture(targets.blurTexB);
+  destroyTexture(targets.sceneTexture);
+  destroyTexture(targets.horizontalBlurTexture);
+  destroyTexture(targets.verticalBlurTexture);
 }
 
 export function createOffscreenTargets({
@@ -68,53 +68,53 @@ export function createOffscreenTargets({
   const usage =
     GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING;
 
-  const sceneTex = device.createTexture({
+  const sceneTexture = device.createTexture({
     size,
     format: OFFSCREEN_FORMAT,
     usage,
   });
-  const blurTexA = device.createTexture({
+  const horizontalBlurTexture = device.createTexture({
     size,
     format: OFFSCREEN_FORMAT,
     usage,
   });
-  const blurTexB = device.createTexture({
+  const verticalBlurTexture = device.createTexture({
     size,
     format: OFFSCREEN_FORMAT,
     usage,
   });
 
   return {
-    sceneTex,
-    blurTexA,
-    blurTexB,
+    sceneTexture,
+    horizontalBlurTexture,
+    verticalBlurTexture,
     blurHorizontalBindGroup: createImageBindGroup(
       device,
       imageBindGroupLayout,
       sampler,
-      sceneTex,
-      sceneTex,
+      sceneTexture,
+      sceneTexture,
     ),
     blurVerticalBindGroup: createImageBindGroup(
       device,
       imageBindGroupLayout,
       sampler,
-      blurTexA,
-      blurTexA,
+      horizontalBlurTexture,
+      horizontalBlurTexture,
     ),
     presentBindGroup: createImageBindGroup(
       device,
       imageBindGroupLayout,
       sampler,
-      sceneTex,
-      sceneTex,
+      sceneTexture,
+      sceneTexture,
     ),
     overlayBindGroup: createImageBindGroup(
       device,
       imageBindGroupLayout,
       sampler,
-      sceneTex,
-      blurTexB,
+      sceneTexture,
+      verticalBlurTexture,
     ),
   };
 }

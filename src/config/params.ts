@@ -17,7 +17,7 @@ export const PARAMS: GlassParams = {
   alpha: 1.0,
 };
 
-// --- Interaction constants (CSS px) ---
-export const MIN_W = 240;
-export const MIN_H = 96;
+// --- Interaction constants (CSS pixels) ---
+export const MIN_WIDTH = 240;
+export const MIN_HEIGHT = 96;
 export const RESIZE_MARGIN = 18;

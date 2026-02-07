@@ -3,7 +3,7 @@ import type { DragMode, GlassRect, ResizeEdges } from "./common";
 export interface CanvasState {
   pixelWidth: number;
   pixelHeight: number;
-  dpr: number;
+  devicePixelRatio: number;
   cssWidth: number;
   cssHeight: number;
 }
@@ -12,12 +12,12 @@ export interface DragState extends ResizeEdges {
   active: boolean;
   mode: DragMode;
   pointerId: number;
-  startPx: number;
-  startPy: number;
-  startX: number;
-  startY: number;
-  startW: number;
-  startH: number;
+  startPointerLeft: number;
+  startPointerTop: number;
+  startLeft: number;
+  startTop: number;
+  startWidth: number;
+  startHeight: number;
 }
 
 export interface GlassState {
@@ -29,11 +29,11 @@ export interface GlassState {
   startDrag(
     mode: DragMode,
     pointerId: number,
-    px: number,
-    py: number,
+    pointerLeft: number,
+    pointerTop: number,
     edges?: Partial<ResizeEdges>,
   ): void;
   endDrag(pointerId: number): void;
-  applyMove(px: number, py: number): void;
-  applyResize(px: number, py: number): void;
+  applyMove(pointerLeft: number, pointerTop: number): void;
+  applyResize(pointerLeft: number, pointerTop: number): void;
 }

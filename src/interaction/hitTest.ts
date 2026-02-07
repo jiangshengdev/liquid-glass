@@ -8,54 +8,54 @@ export interface HitResult {
 
 export function hitTestGlass(
   glass: GlassRect,
-  px: number,
-  py: number,
+  pointerLeft: number,
+  pointerTop: number,
   resizeMargin: number,
 ): HitResult {
-  const centerX = glass.xCss + glass.wCss * 0.5;
-  const centerY = glass.yCss + glass.hCss * 0.5;
-  const halfW = glass.wCss * 0.5;
-  const halfH = glass.hCss * 0.5;
-  const radius = glass.hCss * 0.5;
+  const centerLeft = glass.left + glass.width * 0.5;
+  const centerTop = glass.top + glass.height * 0.5;
+  const halfWidth = glass.width * 0.5;
+  const halfHeight = glass.height * 0.5;
+  const radius = glass.height * 0.5;
   const signedDistance = sdRoundRect(
-    px - centerX,
-    py - centerY,
-    halfW,
-    halfH,
+    pointerLeft - centerLeft,
+    pointerTop - centerTop,
+    halfWidth,
+    halfHeight,
     radius,
   );
   const inside = signedDistance <= 0;
 
   // Move uses rounded shape, while resize handles stay on the AABB like design tools.
-  const rectLeft = glass.xCss;
-  const rectTop = glass.yCss;
-  const rectRight = glass.xCss + glass.wCss;
-  const rectBottom = glass.yCss + glass.hCss;
-  const deltaX = Math.max(rectLeft - px, 0, px - rectRight);
-  const deltaY = Math.max(rectTop - py, 0, py - rectBottom);
-  const distanceToRect = Math.hypot(deltaX, deltaY);
+  const rectLeft = glass.left;
+  const rectTop = glass.top;
+  const rectRight = glass.left + glass.width;
+  const rectBottom = glass.top + glass.height;
+  const deltaLeft = Math.max(rectLeft - pointerLeft, 0, pointerLeft - rectRight);
+  const deltaTop = Math.max(rectTop - pointerTop, 0, pointerTop - rectBottom);
+  const distanceToRect = Math.hypot(deltaLeft, deltaTop);
   const active = distanceToRect <= resizeMargin;
 
-  const distanceLeft = px - glass.xCss;
-  const distanceRight = glass.xCss + glass.wCss - px;
-  const distanceTop = py - glass.yCss;
-  const distanceBottom = glass.yCss + glass.hCss - py;
-  const absDistanceLeft = Math.abs(distanceLeft);
-  const absDistanceRight = Math.abs(distanceRight);
-  const absDistanceTop = Math.abs(distanceTop);
-  const absDistanceBottom = Math.abs(distanceBottom);
+  const distanceLeft = pointerLeft - glass.left;
+  const distanceRight = glass.left + glass.width - pointerLeft;
+  const distanceTop = pointerTop - glass.top;
+  const distanceBottom = glass.top + glass.height - pointerTop;
+  const absoluteDistanceLeft = Math.abs(distanceLeft);
+  const absoluteDistanceRight = Math.abs(distanceRight);
+  const absoluteDistanceTop = Math.abs(distanceTop);
+  const absoluteDistanceBottom = Math.abs(distanceBottom);
 
-  let nearLeft = absDistanceLeft < resizeMargin;
-  let nearRight = absDistanceRight < resizeMargin;
+  let nearLeft = absoluteDistanceLeft < resizeMargin;
+  let nearRight = absoluteDistanceRight < resizeMargin;
   if (nearLeft && nearRight) {
-    nearLeft = absDistanceLeft <= absDistanceRight;
+    nearLeft = absoluteDistanceLeft <= absoluteDistanceRight;
     nearRight = !nearLeft;
   }
 
-  let nearTop = absDistanceTop < resizeMargin;
-  let nearBottom = absDistanceBottom < resizeMargin;
+  let nearTop = absoluteDistanceTop < resizeMargin;
+  let nearBottom = absoluteDistanceBottom < resizeMargin;
   if (nearTop && nearBottom) {
-    nearTop = absDistanceTop <= absDistanceBottom;
+    nearTop = absoluteDistanceTop <= absoluteDistanceBottom;
     nearBottom = !nearTop;
   }
 

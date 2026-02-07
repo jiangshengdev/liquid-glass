@@ -19,7 +19,7 @@ export function createRenderer({
   imageAspect,
   state,
   params,
-  dprClamped,
+  devicePixelRatioClamped,
   log,
   updateGlassUi,
   isGlassUiHidden,
@@ -56,16 +56,16 @@ export function createRenderer({
   }
 
   function ensureCanvasConfigured(): boolean {
-    const dpr = dprClamped();
+    const devicePixelRatio = devicePixelRatioClamped();
     const cssWidth = canvas.clientWidth;
     const cssHeight = canvas.clientHeight;
-    const pixelWidth = Math.max(1, Math.floor(cssWidth * dpr));
-    const pixelHeight = Math.max(1, Math.floor(cssHeight * dpr));
+    const pixelWidth = Math.max(1, Math.floor(cssWidth * devicePixelRatio));
+    const pixelHeight = Math.max(1, Math.floor(cssHeight * devicePixelRatio));
 
     const changed = state.updateCanvasState({
       pixelWidth,
       pixelHeight,
-      dpr,
+      devicePixelRatio,
       cssWidth,
       cssHeight,
     });
@@ -79,9 +79,9 @@ export function createRenderer({
         alphaMode: "premultiplied",
       });
       log("canvasContext.configure =", {
-        w: pixelWidth,
-        h: pixelHeight,
-        dpr,
+        width: pixelWidth,
+        height: pixelHeight,
+        devicePixelRatio,
         presentationFormat,
       });
     }
@@ -95,14 +95,14 @@ export function createRenderer({
   function writeUniforms(): void {
     packUniforms(
       {
-        canvasPxW: state.canvas.pixelWidth,
-        canvasPxH: state.canvas.pixelHeight,
+        canvasWidth: state.canvas.pixelWidth,
+        canvasHeight: state.canvas.pixelHeight,
         imageAspect,
-        dpr: state.canvas.dpr,
-        overlayXCss: state.glass.xCss,
-        overlayYCss: state.glass.yCss,
-        overlayWCss: state.glass.wCss,
-        overlayHCss: state.glass.hCss,
+        devicePixelRatio: state.canvas.devicePixelRatio,
+        overlayLeft: state.glass.left,
+        overlayTop: state.glass.top,
+        overlayWidth: state.glass.width,
+        overlayHeight: state.glass.height,
         params,
       },
       uniformFloat32Data,

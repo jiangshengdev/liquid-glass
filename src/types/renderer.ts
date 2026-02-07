@@ -20,7 +20,7 @@ export interface RendererDeps {
   imageAspect: number;
   state: GlassState;
   params: GlassParams;
-  dprClamped: () => number;
+  devicePixelRatioClamped: () => number;
   log: LogFn;
   updateGlassUi: (visible?: boolean) => void;
   isGlassUiHidden: () => boolean;

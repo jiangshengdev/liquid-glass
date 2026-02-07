@@ -1,11 +1,11 @@
 import { bootstrapWebGpuApp } from "./app/bootstrap";
 import { createRuntime } from "./app/runtime";
-import { MIN_H, MIN_W, PARAMS, RESIZE_MARGIN } from "./config/params";
+import { MIN_HEIGHT, MIN_WIDTH, PARAMS, RESIZE_MARGIN } from "./config/params";
 import { createRenderer } from "./gpu/renderer";
 import { attachPointerHandlers } from "./interaction/pointer";
 import { createGlassState } from "./state/glassState";
 import { showFallback } from "./utils/dom";
-import { dprClamped } from "./utils/math";
+import { devicePixelRatioClamped } from "./utils/math";
 
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
@@ -33,16 +33,16 @@ async function main(): Promise<void> {
   device.pushErrorScope("validation");
   device.pushErrorScope("out-of-memory");
 
-  const state = createGlassState({ minW: MIN_W, minH: MIN_H });
+  const state = createGlassState({ minWidth: MIN_WIDTH, minHeight: MIN_HEIGHT });
   const updateGlassUi = (visible?: boolean): void => {
     if (!glassUi) return;
     if (typeof visible === "boolean") glassUi.hidden = !visible;
     if (glassUi.hidden) return;
 
-    glassUi.style.left = `${state.glass.xCss}px`;
-    glassUi.style.top = `${state.glass.yCss}px`;
-    glassUi.style.width = `${state.glass.wCss}px`;
-    glassUi.style.height = `${state.glass.hCss}px`;
+    glassUi.style.left = `${state.glass.left}px`;
+    glassUi.style.top = `${state.glass.top}px`;
+    glassUi.style.width = `${state.glass.width}px`;
+    glassUi.style.height = `${state.glass.height}px`;
   };
 
   const renderer = createRenderer({
@@ -57,7 +57,7 @@ async function main(): Promise<void> {
     imageAspect,
     state,
     params: PARAMS,
-    dprClamped,
+    devicePixelRatioClamped,
     log,
     updateGlassUi,
     isGlassUiHidden: () => !!glassUi?.hidden,
