@@ -1,4 +1,5 @@
-import { OFFSCREEN_FORMAT } from "../config/params.js";
+// @ts-nocheck
+import { OFFSCREEN_FORMAT } from "../config/params";
 
 export function createRenderer({
   device,

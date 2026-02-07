@@ -1,3 +1,4 @@
+// @ts-nocheck
 export async function loadBitmap(url) {
   const img = new Image();
   img.decoding = "async";

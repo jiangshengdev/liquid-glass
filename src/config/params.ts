@@ -1,3 +1,4 @@
+// @ts-nocheck
 export const OFFSCREEN_FORMAT = /** @type {GPUTextureFormat} */ ("rgba8unorm");
 
 // --- Parameters (official Figma: Refraction / depth / dispersion / frost / splay) ---

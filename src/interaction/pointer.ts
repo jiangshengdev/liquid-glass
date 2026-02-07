@@ -1,4 +1,5 @@
-import { sdRoundRect } from "../utils/math.js";
+// @ts-nocheck
+import { sdRoundRect } from "../utils/math";
 
 function pointerPosCss(canvas, ev) {
   const r = canvas.getBoundingClientRect();

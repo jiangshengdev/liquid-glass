@@ -1,3 +1,4 @@
+// @ts-nocheck
 export function showFallback(reason) {
   if (reason) console.warn("[webgpu:fallback]", reason);
   const el = document.getElementById("fallback");

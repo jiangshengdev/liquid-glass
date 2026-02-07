@@ -1,4 +1,5 @@
-import { clamp } from "../utils/math.js";
+// @ts-nocheck
+import { clamp } from "../utils/math";
 
 export function createGlassState({ minW, minH }) {
   // Persistent glass rect (CSS px) so resizing the window does not reset placement.

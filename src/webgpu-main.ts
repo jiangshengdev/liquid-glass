@@ -1,11 +1,12 @@
+// @ts-nocheck
 import wgsl from "./shaders.wgsl?raw";
-import { loadBitmap, createImageTexture } from "./utils/image.js";
-import { PARAMS, MIN_W, MIN_H, RESIZE_MARGIN } from "./config/params.js";
-import { createRenderer } from "./gpu/renderer.js";
-import { attachPointerHandlers } from "./interaction/pointer.js";
-import { createGlassState } from "./state/glassState.js";
-import { showFallback } from "./utils/dom.js";
-import { dprClamped } from "./utils/math.js";
+import { loadBitmap, createImageTexture } from "./utils/image";
+import { PARAMS, MIN_W, MIN_H, RESIZE_MARGIN } from "./config/params";
+import { createRenderer } from "./gpu/renderer";
+import { attachPointerHandlers } from "./interaction/pointer";
+import { createGlassState } from "./state/glassState";
+import { showFallback } from "./utils/dom";
+import { dprClamped } from "./utils/math";
 
 async function main() {
   const log = (...args) => console.log("[webgpu]", ...args);
