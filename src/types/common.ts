@@ -1,10 +1,10 @@
 export type DragMode = "move" | "resize";
 
 export interface ResizeEdges {
-  l: boolean;
-  r: boolean;
-  t: boolean;
-  b: boolean;
+  left: boolean;
+  right: boolean;
+  top: boolean;
+  bottom: boolean;
 }
 
 export interface GlassRect {

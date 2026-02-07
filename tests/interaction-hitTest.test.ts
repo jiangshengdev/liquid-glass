@@ -22,7 +22,7 @@ describe("interaction/hitTest", () => {
     const leftEdge = hitTestGlass(glass, 100, 160, margin);
 
     expect(leftEdge.mode).toBe("resize");
-    expect(leftEdge.edges.l).toBe(true);
+    expect(leftEdge.edges.left).toBe(true);
     expect(cursorForHit(leftEdge.mode, leftEdge.edges)).toBe("ew-resize");
   });
 

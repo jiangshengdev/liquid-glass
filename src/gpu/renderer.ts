@@ -11,7 +11,7 @@ export function createRenderer({
   device,
   queue,
   canvas,
-  ctx,
+  canvasContext,
   sampler,
   imageTex,
   module,
@@ -41,15 +41,15 @@ export function createRenderer({
   let targets: OffscreenTargets | null = null;
   let sceneDirty = true;
 
-  const uniformsF32 = new Float32Array(24);
+  const uniformFloat32Data = new Float32Array(24);
 
   function recreateOffscreenTargets(): void {
     targets = createOffscreenTargets({
       device,
-      imageBGL: pipelines.imageBGL,
+      imageBindGroupLayout: pipelines.imageBindGroupLayout,
       sampler,
-      width: state.canvas.pxW,
-      height: state.canvas.pxH,
+      width: state.canvas.pixelWidth,
+      height: state.canvas.pixelHeight,
       previous: targets,
     });
     sceneDirty = true;
@@ -57,22 +57,33 @@ export function createRenderer({
 
   function ensureCanvasConfigured(): boolean {
     const dpr = dprClamped();
-    const cssW = canvas.clientWidth;
-    const cssH = canvas.clientHeight;
-    const pxW = Math.max(1, Math.floor(cssW * dpr));
-    const pxH = Math.max(1, Math.floor(cssH * dpr));
+    const cssWidth = canvas.clientWidth;
+    const cssHeight = canvas.clientHeight;
+    const pixelWidth = Math.max(1, Math.floor(cssWidth * dpr));
+    const pixelHeight = Math.max(1, Math.floor(cssHeight * dpr));
 
-    const changed = state.updateCanvasState({ pxW, pxH, dpr, cssW, cssH });
+    const changed = state.updateCanvasState({
+      pixelWidth,
+      pixelHeight,
+      dpr,
+      cssWidth,
+      cssHeight,
+    });
 
     if (changed) {
-      canvas.width = pxW;
-      canvas.height = pxH;
-      ctx.configure({
+      canvas.width = pixelWidth;
+      canvas.height = pixelHeight;
+      canvasContext.configure({
         device,
         format: presentationFormat,
         alphaMode: "premultiplied",
       });
-      log("ctx.configure =", { w: pxW, h: pxH, dpr, presentationFormat });
+      log("canvasContext.configure =", {
+        w: pixelWidth,
+        h: pixelHeight,
+        dpr,
+        presentationFormat,
+      });
     }
 
     updateGlassUi(!isGlassUiHidden());
@@ -84,8 +95,8 @@ export function createRenderer({
   function writeUniforms(): void {
     packUniforms(
       {
-        canvasPxW: state.canvas.pxW,
-        canvasPxH: state.canvas.pxH,
+        canvasPxW: state.canvas.pixelWidth,
+        canvasPxH: state.canvas.pixelHeight,
         imageAspect,
         dpr: state.canvas.dpr,
         overlayXCss: state.glass.xCss,
@@ -94,9 +105,9 @@ export function createRenderer({
         overlayHCss: state.glass.hCss,
         params,
       },
-      uniformsF32,
+      uniformFloat32Data,
     );
-    queue.writeBuffer(uniformBuffer, 0, uniformsF32);
+    queue.writeBuffer(uniformBuffer, 0, uniformFloat32Data);
   }
 
   function render(): void {
@@ -112,7 +123,7 @@ export function createRenderer({
     }
 
     // Final pass: present scene + overlay glass.
-    encodeFinalPass({ encoder, ctx, targets, pipelines });
+    encodeFinalPass({ encoder, canvasContext, targets, pipelines });
 
     queue.submit([encoder.finish()]);
   }

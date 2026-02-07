@@ -6,11 +6,11 @@ describe("state/glassState", () => {
   it("enforces min size and canvas bounds in clampGlass", () => {
     const state = createGlassState({ minW: 240, minH: 96 });
     state.updateCanvasState({
-      pxW: 1200,
-      pxH: 700,
+      pixelWidth: 1200,
+      pixelHeight: 700,
       dpr: 1,
-      cssW: 1200,
-      cssH: 700,
+      cssWidth: 1200,
+      cssHeight: 700,
     });
 
     state.glass.wCss = 12;
@@ -28,11 +28,11 @@ describe("state/glassState", () => {
   it("keeps capsule constraint (height <= width)", () => {
     const state = createGlassState({ minW: 240, minH: 96 });
     state.updateCanvasState({
-      pxW: 1200,
-      pxH: 700,
+      pixelWidth: 1200,
+      pixelHeight: 700,
       dpr: 1,
-      cssW: 1200,
-      cssH: 700,
+      cssWidth: 1200,
+      cssHeight: 700,
     });
 
     state.glass.wCss = 260;
@@ -45,11 +45,11 @@ describe("state/glassState", () => {
   it("keeps resize width at min bound when shrinking too far", () => {
     const state = createGlassState({ minW: 240, minH: 96 });
     state.updateCanvasState({
-      pxW: 1200,
-      pxH: 700,
+      pixelWidth: 1200,
+      pixelHeight: 700,
       dpr: 1,
-      cssW: 1200,
-      cssH: 700,
+      cssWidth: 1200,
+      cssHeight: 700,
     });
 
     state.startDrag(
@@ -57,7 +57,7 @@ describe("state/glassState", () => {
       1,
       state.glass.xCss + state.glass.wCss,
       state.glass.yCss + state.glass.hCss * 0.5,
-      { r: true },
+      { right: true },
     );
     state.applyResize(state.drag.startPx - 5000, state.drag.startPy);
     state.endDrag(1);

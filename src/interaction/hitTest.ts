@@ -16,9 +16,9 @@ export function hitTestGlass(
   const cy = glass.yCss + glass.hCss * 0.5;
   const halfW = glass.wCss * 0.5;
   const halfH = glass.hCss * 0.5;
-  const rad = glass.hCss * 0.5;
-  const d = sdRoundRect(px - cx, py - cy, halfW, halfH, rad);
-  const inside = d <= 0;
+  const radius = glass.hCss * 0.5;
+  const signedDistance = sdRoundRect(px - cx, py - cy, halfW, halfH, radius);
+  const inside = signedDistance <= 0;
 
   // Move uses rounded shape, while resize handles stay on the AABB like design tools.
   const x1 = glass.xCss;
@@ -30,34 +30,40 @@ export function hitTestGlass(
   const distRect = Math.hypot(dx, dy);
   const active = distRect <= resizeMargin;
 
-  const dl = px - glass.xCss;
-  const dr = glass.xCss + glass.wCss - px;
-  const dt = py - glass.yCss;
-  const db = glass.yCss + glass.hCss - py;
-  const adl = Math.abs(dl);
-  const adr = Math.abs(dr);
-  const adt = Math.abs(dt);
-  const adb = Math.abs(db);
+  const distanceLeft = px - glass.xCss;
+  const distanceRight = glass.xCss + glass.wCss - px;
+  const distanceTop = py - glass.yCss;
+  const distanceBottom = glass.yCss + glass.hCss - py;
+  const absDistanceLeft = Math.abs(distanceLeft);
+  const absDistanceRight = Math.abs(distanceRight);
+  const absDistanceTop = Math.abs(distanceTop);
+  const absDistanceBottom = Math.abs(distanceBottom);
 
-  let nearL = adl < resizeMargin;
-  let nearR = adr < resizeMargin;
-  if (nearL && nearR) {
-    nearL = adl <= adr;
-    nearR = !nearL;
+  let nearLeft = absDistanceLeft < resizeMargin;
+  let nearRight = absDistanceRight < resizeMargin;
+  if (nearLeft && nearRight) {
+    nearLeft = absDistanceLeft <= absDistanceRight;
+    nearRight = !nearLeft;
   }
 
-  let nearT = adt < resizeMargin;
-  let nearB = adb < resizeMargin;
-  if (nearT && nearB) {
-    nearT = adt <= adb;
-    nearB = !nearT;
+  let nearTop = absDistanceTop < resizeMargin;
+  let nearBottom = absDistanceBottom < resizeMargin;
+  if (nearTop && nearBottom) {
+    nearTop = absDistanceTop <= absDistanceBottom;
+    nearBottom = !nearTop;
   }
 
   const edges: ResizeEdges = active
-    ? { l: nearL, r: nearR, t: nearT, b: nearB }
-    : { l: false, r: false, t: false, b: false };
+    ? {
+        left: nearLeft,
+        right: nearRight,
+        top: nearTop,
+        bottom: nearBottom,
+      }
+    : { left: false, right: false, top: false, bottom: false };
 
-  const wantsResize = active && (nearL || nearR || nearT || nearB);
+  const wantsResize =
+    active && (nearLeft || nearRight || nearTop || nearBottom);
   const mode: DragMode | null = wantsResize ? "resize" : inside ? "move" : null;
   return { mode, edges };
 }
@@ -67,11 +73,11 @@ export function cursorForHit(
   edges: ResizeEdges,
 ): string {
   if (mode === "resize") {
-    const { l, r, t, b } = edges;
-    if ((l && t) || (r && b)) return "nwse-resize";
-    if ((r && t) || (l && b)) return "nesw-resize";
-    if (l || r) return "ew-resize";
-    if (t || b) return "ns-resize";
+    const { left, right, top, bottom } = edges;
+    if ((left && top) || (right && bottom)) return "nwse-resize";
+    if ((right && top) || (left && bottom)) return "nesw-resize";
+    if (left || right) return "ew-resize";
+    if (top || bottom) return "ns-resize";
   }
   if (mode === "move") return "move";
   return "";

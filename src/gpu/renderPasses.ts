@@ -14,7 +14,7 @@ export function encodeScenePasses({
 }: EncodePassOptions): void {
   // Pass 1: render cover-mapped image into sceneTex.
   {
-    const pass = encoder.beginRenderPass({
+    const scenePass = encoder.beginRenderPass({
       colorAttachments: [
         {
           view: targets.sceneTex.createView(),
@@ -24,16 +24,16 @@ export function encodeScenePasses({
         },
       ],
     });
-    pass.setBindGroup(0, pipelines.uniformBG);
-    pass.setBindGroup(1, pipelines.imageBG);
-    pass.setPipeline(pipelines.scenePipeline);
-    pass.draw(3);
-    pass.end();
+    scenePass.setBindGroup(0, pipelines.uniformBindGroup);
+    scenePass.setBindGroup(1, pipelines.imageBindGroup);
+    scenePass.setPipeline(pipelines.scenePipeline);
+    scenePass.draw(3);
+    scenePass.end();
   }
 
   // Pass 2: horizontal blur -> blurTexA.
   {
-    const pass = encoder.beginRenderPass({
+    const blurHorizontalPass = encoder.beginRenderPass({
       colorAttachments: [
         {
           view: targets.blurTexA.createView(),
@@ -43,16 +43,16 @@ export function encodeScenePasses({
         },
       ],
     });
-    pass.setBindGroup(0, pipelines.uniformBG);
-    pass.setBindGroup(1, targets.blurHBG);
-    pass.setPipeline(pipelines.blurHPipeline);
-    pass.draw(3);
-    pass.end();
+    blurHorizontalPass.setBindGroup(0, pipelines.uniformBindGroup);
+    blurHorizontalPass.setBindGroup(1, targets.blurHorizontalBindGroup);
+    blurHorizontalPass.setPipeline(pipelines.blurHPipeline);
+    blurHorizontalPass.draw(3);
+    blurHorizontalPass.end();
   }
 
   // Pass 3: vertical blur -> blurTexB.
   {
-    const pass = encoder.beginRenderPass({
+    const blurVerticalPass = encoder.beginRenderPass({
       colorAttachments: [
         {
           view: targets.blurTexB.createView(),
@@ -62,29 +62,29 @@ export function encodeScenePasses({
         },
       ],
     });
-    pass.setBindGroup(0, pipelines.uniformBG);
-    pass.setBindGroup(1, targets.blurVBG);
-    pass.setPipeline(pipelines.blurVPipeline);
-    pass.draw(3);
-    pass.end();
+    blurVerticalPass.setBindGroup(0, pipelines.uniformBindGroup);
+    blurVerticalPass.setBindGroup(1, targets.blurVerticalBindGroup);
+    blurVerticalPass.setPipeline(pipelines.blurVPipeline);
+    blurVerticalPass.draw(3);
+    blurVerticalPass.end();
   }
 }
 
 interface EncodeFinalPassOptions {
   encoder: GPUCommandEncoder;
-  ctx: GPUCanvasContext;
+  canvasContext: GPUCanvasContext;
   targets: OffscreenTargets;
   pipelines: RendererPipelines;
 }
 
 export function encodeFinalPass({
   encoder,
-  ctx,
+  canvasContext,
   targets,
   pipelines,
 }: EncodeFinalPassOptions): void {
-  const view = ctx.getCurrentTexture().createView();
-  const pass = encoder.beginRenderPass({
+  const view = canvasContext.getCurrentTexture().createView();
+  const finalPass = encoder.beginRenderPass({
     colorAttachments: [
       {
         view,
@@ -95,15 +95,15 @@ export function encodeFinalPass({
     ],
   });
 
-  pass.setBindGroup(0, pipelines.uniformBG);
+  finalPass.setBindGroup(0, pipelines.uniformBindGroup);
 
-  pass.setBindGroup(1, targets.presentBG);
-  pass.setPipeline(pipelines.presentPipeline);
-  pass.draw(3);
+  finalPass.setBindGroup(1, targets.presentBindGroup);
+  finalPass.setPipeline(pipelines.presentPipeline);
+  finalPass.draw(3);
 
-  pass.setBindGroup(1, targets.overlayBG);
-  pass.setPipeline(pipelines.overlayPipeline);
-  pass.draw(3);
+  finalPass.setBindGroup(1, targets.overlayBindGroup);
+  finalPass.setPipeline(pipelines.overlayPipeline);
+  finalPass.draw(3);
 
-  pass.end();
+  finalPass.end();
 }

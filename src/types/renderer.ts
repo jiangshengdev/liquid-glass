@@ -12,7 +12,7 @@ export interface RendererDeps {
   device: GPUDevice;
   queue: GPUQueue;
   canvas: HTMLCanvasElement;
-  ctx: GPUCanvasContext;
+  canvasContext: GPUCanvasContext;
   sampler: GPUSampler;
   imageTex: GPUTexture;
   module: GPUShaderModule;

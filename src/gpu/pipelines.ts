@@ -1,10 +1,10 @@
 import { OFFSCREEN_FORMAT } from "../config/params";
 
 export interface RendererPipelines {
-  uniformBGL: GPUBindGroupLayout;
-  imageBGL: GPUBindGroupLayout;
-  uniformBG: GPUBindGroup;
-  imageBG: GPUBindGroup;
+  uniformBindGroupLayout: GPUBindGroupLayout;
+  imageBindGroupLayout: GPUBindGroupLayout;
+  uniformBindGroup: GPUBindGroup;
+  imageBindGroup: GPUBindGroup;
   scenePipeline: GPURenderPipeline;
   blurHPipeline: GPURenderPipeline;
   blurVPipeline: GPURenderPipeline;
@@ -29,7 +29,7 @@ export function createPipelines({
   imageTex,
   sampler,
 }: CreatePipelinesOptions): RendererPipelines {
-  const uniformBGL = device.createBindGroupLayout({
+  const uniformBindGroupLayout = device.createBindGroupLayout({
     entries: [
       {
         binding: 0,
@@ -39,7 +39,7 @@ export function createPipelines({
     ],
   });
 
-  const imageBGL = device.createBindGroupLayout({
+  const imageBindGroupLayout = device.createBindGroupLayout({
     entries: [
       {
         binding: 0,
@@ -59,13 +59,13 @@ export function createPipelines({
     ],
   });
 
-  const uniformBG = device.createBindGroup({
-    layout: uniformBGL,
+  const uniformBindGroup = device.createBindGroup({
+    layout: uniformBindGroupLayout,
     entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
   });
 
-  const imageBG = device.createBindGroup({
-    layout: imageBGL,
+  const imageBindGroup = device.createBindGroup({
+    layout: imageBindGroupLayout,
     entries: [
       { binding: 0, resource: imageTex.createView() },
       { binding: 1, resource: imageTex.createView() },
@@ -74,7 +74,7 @@ export function createPipelines({
   });
 
   const pipelineLayout = device.createPipelineLayout({
-    bindGroupLayouts: [uniformBGL, imageBGL],
+    bindGroupLayouts: [uniformBindGroupLayout, imageBindGroupLayout],
   });
 
   const scenePipeline = device.createRenderPipeline({
@@ -149,10 +149,10 @@ export function createPipelines({
   });
 
   return {
-    uniformBGL,
-    imageBGL,
-    uniformBG,
-    imageBG,
+    uniformBindGroupLayout,
+    imageBindGroupLayout,
+    uniformBindGroup,
+    imageBindGroup,
     scenePipeline,
     blurHPipeline,
     blurVPipeline,

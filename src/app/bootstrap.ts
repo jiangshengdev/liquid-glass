@@ -11,7 +11,7 @@ export interface BootstrapResult {
   device: GPUDevice;
   queue: GPUQueue;
   canvas: HTMLCanvasElement;
-  ctx: GPUCanvasContext;
+  canvasContext: GPUCanvasContext;
   glassUi: HTMLDivElement | null;
   presentationFormat: GPUTextureFormat;
   sampler: GPUSampler;
@@ -79,8 +79,8 @@ export async function bootstrapWebGpuApp(): Promise<BootstrapResult | null> {
   }
   const canvas = canvasEl;
 
-  const ctx = canvas.getContext("webgpu") as GPUCanvasContext | null;
-  if (!ctx) {
+  const canvasContext = canvas.getContext("webgpu") as GPUCanvasContext | null;
+  if (!canvasContext) {
     showFallback(
       "canvas.getContext(webgpu) 返回 null：可能是 WebGPU 未启用，或页面不是安全上下文。",
     );
@@ -102,10 +102,10 @@ export async function bootstrapWebGpuApp(): Promise<BootstrapResult | null> {
     addressModeV: "clamp-to-edge",
   });
 
-  const imgUrl = new URL("../assets/left-image.png", import.meta.url).href;
-  log("loading image =", imgUrl);
+  const imageUrl = new URL("../assets/left-image.png", import.meta.url).href;
+  log("loading image =", imageUrl);
 
-  const bitmap = await loadBitmap(imgUrl);
+  const bitmap = await loadBitmap(imageUrl);
   log("image bitmap =", { width: bitmap.width, height: bitmap.height });
 
   const imageAspect = bitmap.width / Math.max(1, bitmap.height);
@@ -151,7 +151,7 @@ export async function bootstrapWebGpuApp(): Promise<BootstrapResult | null> {
     device,
     queue,
     canvas,
-    ctx,
+    canvasContext,
     glassUi,
     presentationFormat,
     sampler,

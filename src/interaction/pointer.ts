@@ -3,10 +3,13 @@ import { cursorForHit, hitTestGlass } from "./hitTest";
 
 function pointerPosCss(
   canvas: HTMLCanvasElement,
-  ev: PointerEvent,
+  event: PointerEvent,
 ): { x: number; y: number } {
-  const r = canvas.getBoundingClientRect();
-  return { x: ev.clientX - r.left, y: ev.clientY - r.top };
+  const canvasRect = canvas.getBoundingClientRect();
+  return {
+    x: event.clientX - canvasRect.left,
+    y: event.clientY - canvasRect.top,
+  };
 }
 
 export function attachPointerHandlers({
@@ -18,59 +21,76 @@ export function attachPointerHandlers({
   updateGlassUi,
   stoppedRef,
 }: PointerHandlersDeps): () => void {
-  const onPointerDown = (ev: PointerEvent): void => {
+  const onPointerDown = (event: PointerEvent): void => {
     if (stoppedRef.value) return;
-    if (!ev.isPrimary || ev.button !== 0) return;
+    if (!event.isPrimary || event.button !== 0) return;
 
     ensureCanvasConfigured();
 
-    const p = pointerPosCss(canvas, ev);
-    const hit = hitTestGlass(state.glass, p.x, p.y, resizeMargin);
+    const pointerPosition = pointerPosCss(canvas, event);
+    const hit = hitTestGlass(
+      state.glass,
+      pointerPosition.x,
+      pointerPosition.y,
+      resizeMargin,
+    );
     if (!hit.mode) return;
 
-    canvas.setPointerCapture(ev.pointerId);
-    state.startDrag(hit.mode, ev.pointerId, p.x, p.y, hit.edges);
+    canvas.setPointerCapture(event.pointerId);
+    state.startDrag(
+      hit.mode,
+      event.pointerId,
+      pointerPosition.x,
+      pointerPosition.y,
+      hit.edges,
+    );
     updateGlassUi(true);
     canvas.style.cursor =
       cursorForHit(hit.mode, hit.edges) || canvas.style.cursor;
-    ev.preventDefault();
+    event.preventDefault();
     requestRender();
   };
 
-  const onPointerMove = (ev: PointerEvent): void => {
+  const onPointerMove = (event: PointerEvent): void => {
     if (stoppedRef.value) return;
-    const p = pointerPosCss(canvas, ev);
+    const pointerPosition = pointerPosCss(canvas, event);
     ensureCanvasConfigured();
 
     if (!state.drag.active) {
-      const hit = hitTestGlass(state.glass, p.x, p.y, resizeMargin);
-      const c = cursorForHit(hit.mode, hit.edges);
-      canvas.style.cursor = c || "default";
+      const hit = hitTestGlass(
+        state.glass,
+        pointerPosition.x,
+        pointerPosition.y,
+        resizeMargin,
+      );
+      const cursor = cursorForHit(hit.mode, hit.edges);
+      canvas.style.cursor = cursor || "default";
       updateGlassUi(!!hit.mode);
       return;
     }
 
-    if (ev.pointerId !== state.drag.pointerId) return;
-    if (state.drag.mode === "move") state.applyMove(p.x, p.y);
-    else state.applyResize(p.x, p.y);
+    if (event.pointerId !== state.drag.pointerId) return;
+    if (state.drag.mode === "move")
+      state.applyMove(pointerPosition.x, pointerPosition.y);
+    else state.applyResize(pointerPosition.x, pointerPosition.y);
 
-    ev.preventDefault();
+    event.preventDefault();
     requestRender();
   };
 
-  const onPointerUp = (ev: PointerEvent): void => {
+  const onPointerUp = (event: PointerEvent): void => {
     try {
-      if (canvas.hasPointerCapture(ev.pointerId))
-        canvas.releasePointerCapture(ev.pointerId);
+      if (canvas.hasPointerCapture(event.pointerId))
+        canvas.releasePointerCapture(event.pointerId);
     } catch {
       // ignore
     }
-    state.endDrag(ev.pointerId);
+    state.endDrag(event.pointerId);
     requestRender();
   };
 
-  const onLostCapture = (ev: PointerEvent): void => {
-    state.endDrag(ev.pointerId);
+  const onLostCapture = (event: PointerEvent): void => {
+    state.endDrag(event.pointerId);
     requestRender();
   };
 

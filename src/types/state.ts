@@ -1,11 +1,11 @@
 import type { DragMode, GlassRect, ResizeEdges } from "./common";
 
 export interface CanvasState {
-  pxW: number;
-  pxH: number;
+  pixelWidth: number;
+  pixelHeight: number;
   dpr: number;
-  cssW: number;
-  cssH: number;
+  cssWidth: number;
+  cssHeight: number;
 }
 
 export interface DragState extends ResizeEdges {
@@ -24,7 +24,7 @@ export interface GlassState {
   glass: GlassRect;
   drag: DragState;
   canvas: CanvasState;
-  clampGlass(cssW: number, cssH: number): void;
+  clampGlass(cssWidth: number, cssHeight: number): void;
   updateCanvasState(next: CanvasState): boolean;
   startDrag(
     mode: DragMode,
