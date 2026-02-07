@@ -12,8 +12,8 @@ function errorMessage(err: unknown): string {
 }
 
 async function main(): Promise<void> {
-  const boot = await bootstrapWebGpuApp();
-  if (!boot) return;
+  const bootstrapResult = await bootstrapWebGpuApp();
+  if (!bootstrapResult) return;
 
   const {
     log,
@@ -27,7 +27,7 @@ async function main(): Promise<void> {
     imageTex,
     imageAspect,
     shaderModule,
-  } = boot;
+  } = bootstrapResult;
 
   // Surface any validation errors (Safari sometimes does not show these clearly otherwise).
   device.pushErrorScope("validation");
@@ -73,10 +73,10 @@ async function main(): Promise<void> {
       console.error("[webgpu] Validation error:", validationError);
 
     if (oomError || validationError) {
-      const msg =
+      const validationFailureMessage =
         (validationError ?? oomError)?.message ??
         String(validationError ?? oomError);
-      showFallback(`GPU 校验失败：${msg}`);
+      showFallback(`GPU 校验失败：${validationFailureMessage}`);
       return;
     }
   }

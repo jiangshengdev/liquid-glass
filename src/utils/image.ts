@@ -1,9 +1,9 @@
 export async function loadBitmap(url: string): Promise<ImageBitmap> {
-  const img = new Image();
-  img.decoding = "async";
-  img.src = url;
-  await img.decode();
-  return createImageBitmap(img);
+  const imageElement = new Image();
+  imageElement.decoding = "async";
+  imageElement.src = url;
+  await imageElement.decode();
+  return createImageBitmap(imageElement);
 }
 
 export function createImageTexture(

@@ -12,23 +12,29 @@ export function hitTestGlass(
   py: number,
   resizeMargin: number,
 ): HitResult {
-  const cx = glass.xCss + glass.wCss * 0.5;
-  const cy = glass.yCss + glass.hCss * 0.5;
+  const centerX = glass.xCss + glass.wCss * 0.5;
+  const centerY = glass.yCss + glass.hCss * 0.5;
   const halfW = glass.wCss * 0.5;
   const halfH = glass.hCss * 0.5;
   const radius = glass.hCss * 0.5;
-  const signedDistance = sdRoundRect(px - cx, py - cy, halfW, halfH, radius);
+  const signedDistance = sdRoundRect(
+    px - centerX,
+    py - centerY,
+    halfW,
+    halfH,
+    radius,
+  );
   const inside = signedDistance <= 0;
 
   // Move uses rounded shape, while resize handles stay on the AABB like design tools.
-  const x1 = glass.xCss;
-  const y1 = glass.yCss;
-  const x2 = glass.xCss + glass.wCss;
-  const y2 = glass.yCss + glass.hCss;
-  const dx = Math.max(x1 - px, 0, px - x2);
-  const dy = Math.max(y1 - py, 0, py - y2);
-  const distRect = Math.hypot(dx, dy);
-  const active = distRect <= resizeMargin;
+  const rectLeft = glass.xCss;
+  const rectTop = glass.yCss;
+  const rectRight = glass.xCss + glass.wCss;
+  const rectBottom = glass.yCss + glass.hCss;
+  const deltaX = Math.max(rectLeft - px, 0, px - rectRight);
+  const deltaY = Math.max(rectTop - py, 0, py - rectBottom);
+  const distanceToRect = Math.hypot(deltaX, deltaY);
+  const active = distanceToRect <= resizeMargin;
 
   const distanceLeft = px - glass.xCss;
   const distanceRight = glass.xCss + glass.wCss - px;

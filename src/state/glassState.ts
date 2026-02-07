@@ -111,84 +111,84 @@ export function createGlassState({
   }
 
   function applyMove(px: number, py: number): void {
-    const dx = px - drag.startPx;
-    const dy = py - drag.startPy;
-    glass.xCss = drag.startX + dx;
-    glass.yCss = drag.startY + dy;
+    const deltaX = px - drag.startPx;
+    const deltaY = py - drag.startPy;
+    glass.xCss = drag.startX + deltaX;
+    glass.yCss = drag.startY + deltaY;
     clampGlass(canvas.cssWidth, canvas.cssHeight);
   }
 
   function applyResize(px: number, py: number): void {
-    const dx = px - drag.startPx;
-    const dy = py - drag.startPy;
+    const deltaX = px - drag.startPx;
+    const deltaY = py - drag.startPy;
 
-    let x1 = drag.startX;
-    let y1 = drag.startY;
-    let x2 = drag.startX + drag.startW;
-    let y2 = drag.startY + drag.startH;
+    let left = drag.startX;
+    let top = drag.startY;
+    let right = drag.startX + drag.startW;
+    let bottom = drag.startY + drag.startH;
 
-    if (drag.left) x1 += dx;
-    if (drag.right) x2 += dx;
-    if (drag.top) y1 += dy;
-    if (drag.bottom) y2 += dy;
+    if (drag.left) left += deltaX;
+    if (drag.right) right += deltaX;
+    if (drag.top) top += deltaY;
+    if (drag.bottom) bottom += deltaY;
 
     // Min size.
-    if (x2 - x1 < minW) {
-      if (drag.left && !drag.right) x1 = x2 - minW;
-      else x2 = x1 + minW;
+    if (right - left < minW) {
+      if (drag.left && !drag.right) left = right - minW;
+      else right = left + minW;
     }
-    if (y2 - y1 < minH) {
-      if (drag.top && !drag.bottom) y1 = y2 - minH;
-      else y2 = y1 + minH;
+    if (bottom - top < minH) {
+      if (drag.top && !drag.bottom) top = bottom - minH;
+      else bottom = top + minH;
     }
 
     // Clamp to canvas bounds (prefer clamping the dragged edge).
     if (drag.left && !drag.right) {
-      x1 = clamp(x1, 0, x2 - minW);
+      left = clamp(left, 0, right - minW);
     } else if (drag.right && !drag.left) {
-      x2 = clamp(x2, x1 + minW, canvas.cssWidth);
+      right = clamp(right, left + minW, canvas.cssWidth);
     } else {
-      const nextWidth = x2 - x1;
-      x1 = clamp(x1, 0, Math.max(0, canvas.cssWidth - nextWidth));
-      x2 = x1 + nextWidth;
+      const nextWidth = right - left;
+      left = clamp(left, 0, Math.max(0, canvas.cssWidth - nextWidth));
+      right = left + nextWidth;
     }
 
     if (drag.top && !drag.bottom) {
-      y1 = clamp(y1, 0, y2 - minH);
+      top = clamp(top, 0, bottom - minH);
     } else if (drag.bottom && !drag.top) {
-      y2 = clamp(y2, y1 + minH, canvas.cssHeight);
+      bottom = clamp(bottom, top + minH, canvas.cssHeight);
     } else {
-      const nextHeight = y2 - y1;
-      y1 = clamp(y1, 0, Math.max(0, canvas.cssHeight - nextHeight));
-      y2 = y1 + nextHeight;
+      const nextHeight = bottom - top;
+      top = clamp(top, 0, Math.max(0, canvas.cssHeight - nextHeight));
+      bottom = top + nextHeight;
     }
 
     // Capsule constraint: keep height <= width (so radius = height/2 stays valid).
-    const nextWidth = x2 - x1;
-    let nextHeight = y2 - y1;
+    const nextWidth = right - left;
+    let nextHeight = bottom - top;
     if (nextHeight > nextWidth) {
       const constrainedHeight = nextWidth;
-      if (drag.top && !drag.bottom) y1 = y2 - constrainedHeight;
-      else if (drag.bottom && !drag.top) y2 = y1 + constrainedHeight;
+      if (drag.top && !drag.bottom) top = bottom - constrainedHeight;
+      else if (drag.bottom && !drag.top) bottom = top + constrainedHeight;
       else {
-        const centerY = (y1 + y2) * 0.5;
-        y1 = centerY - constrainedHeight * 0.5;
-        y2 = y1 + constrainedHeight;
+        const centerY = (top + bottom) * 0.5;
+        top = centerY - constrainedHeight * 0.5;
+        bottom = top + constrainedHeight;
       }
-      if (y1 < 0) {
-        y1 = 0;
-        y2 = constrainedHeight;
+      if (top < 0) {
+        top = 0;
+        bottom = constrainedHeight;
       }
-      if (y2 > canvas.cssHeight) {
-        y2 = canvas.cssHeight;
-        y1 = y2 - constrainedHeight;
+      if (bottom > canvas.cssHeight) {
+        bottom = canvas.cssHeight;
+        top = bottom - constrainedHeight;
       }
-      nextHeight = y2 - y1;
+      nextHeight = bottom - top;
     }
 
-    glass.xCss = x1;
-    glass.yCss = y1;
-    glass.wCss = x2 - x1;
+    glass.xCss = left;
+    glass.yCss = top;
+    glass.wCss = right - left;
     glass.hCss = nextHeight;
     clampGlass(canvas.cssWidth, canvas.cssHeight);
   }

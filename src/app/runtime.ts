@@ -51,9 +51,10 @@ export function createRuntime({
 
   const onUncapturedError = (event: GPUUncapturedErrorEvent): void => {
     stoppedRef.value = true;
-    const msg = event.error?.message ?? String(event.error);
-    console.error("[webgpu] uncapturederror:", msg);
-    showFallback(`GPU 错误：${msg}`);
+    const uncapturedErrorMessage =
+      event.error?.message ?? String(event.error);
+    console.error("[webgpu] uncapturederror:", uncapturedErrorMessage);
+    showFallback(`GPU 错误：${uncapturedErrorMessage}`);
   };
 
   window.addEventListener("resize", onResize);
