@@ -15,8 +15,7 @@ export function sdRoundRect(
 ): number {
   const horizontalDistanceFromCorner =
     Math.abs(pointLeft) - (halfWidth - radius);
-  const verticalDistanceFromCorner =
-    Math.abs(pointTop) - (halfHeight - radius);
+  const verticalDistanceFromCorner = Math.abs(pointTop) - (halfHeight - radius);
   const horizontalDistanceOutside = Math.max(horizontalDistanceFromCorner, 0);
   const verticalDistanceOutside = Math.max(verticalDistanceFromCorner, 0);
   return (

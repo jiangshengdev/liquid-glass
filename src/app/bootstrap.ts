@@ -74,7 +74,9 @@ export async function bootstrapWebGpuApp(): Promise<BootstrapResult | null> {
 
   const canvasEl = document.getElementById("webgpu-canvas");
   if (!(canvasEl instanceof HTMLCanvasElement)) {
-    showFallback("未找到 #webgpu-canvas 画布元素。请确认 index.html 页面结构是否完整。");
+    showFallback(
+      "未找到 #webgpu-canvas 画布元素。请确认 index.html 页面结构是否完整。",
+    );
     return null;
   }
   const canvas = canvasEl;

@@ -33,7 +33,10 @@ async function main(): Promise<void> {
   device.pushErrorScope("validation");
   device.pushErrorScope("out-of-memory");
 
-  const state = createGlassState({ minWidth: MIN_WIDTH, minHeight: MIN_HEIGHT });
+  const state = createGlassState({
+    minWidth: MIN_WIDTH,
+    minHeight: MIN_HEIGHT,
+  });
   const updateGlassUi = (visible?: boolean): void => {
     if (!glassUi) return;
     if (typeof visible === "boolean") glassUi.hidden = !visible;

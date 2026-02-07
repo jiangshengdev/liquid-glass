@@ -53,7 +53,11 @@ export function createGlassState({
 
   function clampGlass(cssWidth: number, cssHeight: number): void {
     glass.width = clamp(glass.width, minWidth, Math.max(minWidth, cssWidth));
-    glass.height = clamp(glass.height, minHeight, Math.max(minHeight, cssHeight));
+    glass.height = clamp(
+      glass.height,
+      minHeight,
+      Math.max(minHeight, cssHeight),
+    );
     // Capsule constraint: radius = height/2 => height should not exceed width.
     glass.height = Math.min(glass.height, glass.width);
     glass.left = clamp(glass.left, 0, Math.max(0, cssWidth - glass.width));

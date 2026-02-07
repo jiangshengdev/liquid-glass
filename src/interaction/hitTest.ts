@@ -31,7 +31,11 @@ export function hitTestGlass(
   const rectTop = glass.top;
   const rectRight = glass.left + glass.width;
   const rectBottom = glass.top + glass.height;
-  const deltaLeft = Math.max(rectLeft - pointerLeft, 0, pointerLeft - rectRight);
+  const deltaLeft = Math.max(
+    rectLeft - pointerLeft,
+    0,
+    pointerLeft - rectRight,
+  );
   const deltaTop = Math.max(rectTop - pointerTop, 0, pointerTop - rectBottom);
   const distanceToRect = Math.hypot(deltaLeft, deltaTop);
   const active = distanceToRect <= resizeMargin;
