@@ -1,4 +1,7 @@
-import { createOffscreenTargets, type OffscreenTargets } from "./offscreenTargets";
+import {
+  createOffscreenTargets,
+  type OffscreenTargets,
+} from "./offscreenTargets";
 import { createPipelines } from "./pipelines";
 import { encodeFinalPass, encodeScenePasses } from "./renderPasses";
 import { packUniforms } from "./uniforms";

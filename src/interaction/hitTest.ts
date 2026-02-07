@@ -62,7 +62,10 @@ export function hitTestGlass(
   return { mode, edges };
 }
 
-export function cursorForHit(mode: DragMode | null, edges: ResizeEdges): string {
+export function cursorForHit(
+  mode: DragMode | null,
+  edges: ResizeEdges,
+): string {
   if (mode === "resize") {
     const { l, r, t, b } = edges;
     if ((l && t) || (r && b)) return "nwse-resize";

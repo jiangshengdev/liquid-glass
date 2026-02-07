@@ -18,7 +18,10 @@ export interface Runtime {
   dispose(): void;
 }
 
-export function createRuntime({ device, renderer }: CreateRuntimeOptions): Runtime {
+export function createRuntime({
+  device,
+  renderer,
+}: CreateRuntimeOptions): Runtime {
   let rafPending = false;
   const stoppedRef: StoppedRef = { value: false };
 

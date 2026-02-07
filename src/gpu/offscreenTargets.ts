@@ -45,7 +45,9 @@ function destroyTexture(texture: GPUTexture | null): void {
   }
 }
 
-export function destroyOffscreenTargets(targets: OffscreenTargets | null): void {
+export function destroyOffscreenTargets(
+  targets: OffscreenTargets | null,
+): void {
   if (!targets) return;
   destroyTexture(targets.sceneTex);
   destroyTexture(targets.blurTexA);
@@ -66,9 +68,21 @@ export function createOffscreenTargets({
   const usage =
     GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING;
 
-  const sceneTex = device.createTexture({ size, format: OFFSCREEN_FORMAT, usage });
-  const blurTexA = device.createTexture({ size, format: OFFSCREEN_FORMAT, usage });
-  const blurTexB = device.createTexture({ size, format: OFFSCREEN_FORMAT, usage });
+  const sceneTex = device.createTexture({
+    size,
+    format: OFFSCREEN_FORMAT,
+    usage,
+  });
+  const blurTexA = device.createTexture({
+    size,
+    format: OFFSCREEN_FORMAT,
+    usage,
+  });
+  const blurTexB = device.createTexture({
+    size,
+    format: OFFSCREEN_FORMAT,
+    usage,
+  });
 
   return {
     sceneTex,

@@ -133,7 +133,9 @@ export async function bootstrapWebGpuApp(): Promise<BootstrapResult | null> {
         console.groupEnd?.();
 
         if (hasError) {
-          showFallback("WGSL 编译失败：请查看控制台中的 shader compilation info。");
+          showFallback(
+            "WGSL 编译失败：请查看控制台中的 shader compilation info。",
+          );
           return null;
         }
       } else {
