@@ -1,4 +1,5 @@
 import { OFFSCREEN_FORMAT } from "../config/params";
+import { packUniforms } from "./uniforms";
 import type { Renderer, RendererDeps } from "../types";
 
 export function createRenderer({
@@ -223,58 +224,21 @@ export function createRenderer({
   }
 
   function writeUniforms(): void {
-    const dpr = state.canvas.dpr;
-    const w = state.canvas.pxW;
-    const h = state.canvas.pxH;
-
-    const overlayX = state.glass.xCss * dpr;
-    const overlayY = state.glass.yCss * dpr;
-    const overlayW = state.glass.wCss * dpr;
-    const overlayH = state.glass.hCss * dpr;
-    const overlayR = overlayH * 0.5;
-    const strokeW = 0;
-
-    const refractionPx = params.refraction * dpr;
-    const depthPx = overlayR * params.depth;
-
-    const frostPx = params.frost * dpr;
-    const lightAngleRad = (params.lightAngleDeg * Math.PI) / 180;
-    const lightStrength = params.lightStrength;
-
-    // Pack uniforms: 6 vec4 = 24 floats.
-    const f = uniformsF32;
-    // canvas0: canvasW, canvasH, imageAspect, padding
-    f[0] = w;
-    f[1] = h;
-    f[2] = imageAspect;
-    f[3] = 0;
-    // overlay0: x,y,w,h (pixels)
-    f[4] = overlayX;
-    f[5] = overlayY;
-    f[6] = overlayW;
-    f[7] = overlayH;
-    // radii0: overlayRadiusPx, strokeWidthPx, refractionPx, depthPx
-    f[8] = overlayR;
-    f[9] = strokeW;
-    f[10] = refractionPx;
-    f[11] = depthPx;
-    // params0: frostPx, lightAngleRad, lightStrength, padding
-    f[12] = frostPx;
-    f[13] = lightAngleRad;
-    f[14] = lightStrength;
-    f[15] = 0;
-    // params1: dispersion, splay, reserved, reserved
-    f[16] = params.dispersion;
-    f[17] = params.splay;
-    f[18] = 0;
-    f[19] = 0;
-    // overlayColor: rgb + alpha (non-premultiplied)
-    f[20] = 1.0;
-    f[21] = 1.0;
-    f[22] = 1.0;
-    f[23] = params.alpha;
-
-    queue.writeBuffer(uniformBuffer, 0, f);
+    packUniforms(
+      {
+        canvasPxW: state.canvas.pxW,
+        canvasPxH: state.canvas.pxH,
+        imageAspect,
+        dpr: state.canvas.dpr,
+        overlayXCss: state.glass.xCss,
+        overlayYCss: state.glass.yCss,
+        overlayWCss: state.glass.wCss,
+        overlayHCss: state.glass.hCss,
+        params,
+      },
+      uniformsF32,
+    );
+    queue.writeBuffer(uniformBuffer, 0, uniformsF32);
   }
 
   function render(): void {
