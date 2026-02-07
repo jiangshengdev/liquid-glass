@@ -118,7 +118,6 @@ export function createRenderer({
     ensureCanvasConfigured,
     writeUniforms,
     render,
-    recreateOffscreenTargets,
     setSceneDirty(value: boolean) {
       sceneDirty = !!value;
     },

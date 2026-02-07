@@ -5,7 +5,6 @@ export interface Renderer {
   ensureCanvasConfigured(): boolean;
   writeUniforms(): void;
   render(): void;
-  recreateOffscreenTargets(): void;
   setSceneDirty(value: boolean): void;
 }
 
