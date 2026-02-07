@@ -72,3 +72,28 @@
 - 保存时间：2026-02-07
 - 项目路径：/Users/jiangsheng/GitHub/liquid-glass
 - 来源：Codex Plan Mode
+
+## 当前状态（更新于 2026-02-07）
+
+### 实施进度
+- [x] 步骤 1：纯工具+配置拆分完成（`utils/`、`config/`）。
+- [x] 步骤 2：状态层拆分完成（`state/glassState.js`）。
+- [x] 步骤 3：渲染层拆分完成（`gpu/renderer.js`）。
+- [x] 步骤 4：交互层拆分完成（`interaction/pointer.js`）。
+- [x] 步骤 5：入口收敛完成（`src/main.js` 仅保留编排与启动）。
+- [x] 步骤 6：基础行为对齐已做并通过构建验证。
+- [x] 步骤 7：关键逻辑保留了必要注释（如 resize/rounded hit-test 等）。
+
+### 验证进度
+- [x] 已执行：`npm run build`（通过）。
+- [ ] 待补充：手工交互回归（移动/缩放/边角光标）与 Safari WebGPU 实机验证。
+
+### 变更清单（已落地）
+- 新增：`/Users/jiangsheng/GitHub/liquid-glass/src/utils/dom.js`
+- 新增：`/Users/jiangsheng/GitHub/liquid-glass/src/utils/math.js`
+- 新增：`/Users/jiangsheng/GitHub/liquid-glass/src/config/params.js`
+- 新增：`/Users/jiangsheng/GitHub/liquid-glass/src/assets/image.js`
+- 新增：`/Users/jiangsheng/GitHub/liquid-glass/src/state/glassState.js`
+- 新增：`/Users/jiangsheng/GitHub/liquid-glass/src/gpu/renderer.js`
+- 新增：`/Users/jiangsheng/GitHub/liquid-glass/src/interaction/pointer.js`
+- 更新：`/Users/jiangsheng/GitHub/liquid-glass/src/main.js`
