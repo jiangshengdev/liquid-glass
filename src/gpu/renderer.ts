@@ -1,5 +1,5 @@
-// @ts-nocheck
 import { OFFSCREEN_FORMAT } from "../config/params";
+import type { Renderer, RendererDeps } from "../types";
 
 export function createRenderer({
   device,
@@ -17,7 +17,7 @@ export function createRenderer({
   log,
   updateGlassUi,
   isGlassUiHidden,
-}) {
+}: RendererDeps): Renderer {
   const uniformBuffer = device.createBuffer({
     size: 256,
     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
@@ -26,6 +26,7 @@ export function createRenderer({
   const uniformBGL = device.createBindGroupLayout({
     entries: [{ binding: 0, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: "uniform" } }],
   });
+
   const imageBGL = device.createBindGroupLayout({
     entries: [
       { binding: 0, visibility: GPUShaderStage.FRAGMENT, texture: { sampleType: "float" } },
@@ -38,6 +39,7 @@ export function createRenderer({
     layout: uniformBGL,
     entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
   });
+
   const imageBG = device.createBindGroup({
     layout: imageBGL,
     entries: [
@@ -48,6 +50,7 @@ export function createRenderer({
   });
 
   const pipelineLayout = device.createPipelineLayout({ bindGroupLayouts: [uniformBGL, imageBGL] });
+
   const scenePipeline = device.createRenderPipeline({
     layout: pipelineLayout,
     vertex: { module, entryPoint: "vs_fullscreen" },
@@ -95,25 +98,18 @@ export function createRenderer({
     primitive: { topology: "triangle-list" },
   });
 
-  /** @type {GPUTexture | null} */
-  let sceneTex = null;
-  /** @type {GPUTexture | null} */
-  let blurTexA = null;
-  /** @type {GPUTexture | null} */
-  let blurTexB = null;
-  /** @type {GPUBindGroup | null} */
-  let blurHBG = null;
-  /** @type {GPUBindGroup | null} */
-  let blurVBG = null;
-  /** @type {GPUBindGroup | null} */
-  let presentBG = null;
-  /** @type {GPUBindGroup | null} */
-  let overlayBG = null;
+  let sceneTex: GPUTexture | null = null;
+  let blurTexA: GPUTexture | null = null;
+  let blurTexB: GPUTexture | null = null;
+  let blurHBG: GPUBindGroup | null = null;
+  let blurVBG: GPUBindGroup | null = null;
+  let presentBG: GPUBindGroup | null = null;
+  let overlayBG: GPUBindGroup | null = null;
   let sceneDirty = true;
 
   const uniformsF32 = new Float32Array(24);
 
-  const makeImageBG = (texA, texB) =>
+  const makeImageBG = (texA: GPUTexture, texB: GPUTexture): GPUBindGroup =>
     device.createBindGroup({
       layout: imageBGL,
       entries: [
@@ -123,7 +119,7 @@ export function createRenderer({
       ],
     });
 
-  function recreateOffscreenTargets() {
+  function recreateOffscreenTargets(): void {
     // Destroy old textures to avoid leaking GPU memory on resize.
     try {
       sceneTex?.destroy();
@@ -155,7 +151,7 @@ export function createRenderer({
     sceneDirty = true;
   }
 
-  function ensureCanvasConfigured() {
+  function ensureCanvasConfigured(): boolean {
     const dpr = dprClamped();
     const cssW = canvas.clientWidth;
     const cssH = canvas.clientHeight;
@@ -177,7 +173,7 @@ export function createRenderer({
     return changed;
   }
 
-  function writeUniforms() {
+  function writeUniforms(): void {
     const dpr = state.canvas.dpr;
     const w = state.canvas.pxW;
     const h = state.canvas.pxH;
@@ -232,7 +228,7 @@ export function createRenderer({
     queue.writeBuffer(uniformBuffer, 0, f);
   }
 
-  function render() {
+  function render(): void {
     // Guard: some Safari builds may briefly return a zero-sized drawable on resize.
     if (canvas.width <= 1 || canvas.height <= 1) return;
     if (!sceneTex || !blurTexA || !blurTexB || !blurHBG || !blurVBG || !presentBG || !overlayBG) return;
@@ -336,7 +332,7 @@ export function createRenderer({
     writeUniforms,
     render,
     recreateOffscreenTargets,
-    setSceneDirty(value) {
+    setSceneDirty(value: boolean) {
       sceneDirty = !!value;
     },
   };

@@ -1,9 +1,10 @@
-// @ts-nocheck
-export const OFFSCREEN_FORMAT = /** @type {GPUTextureFormat} */ ("rgba8unorm");
+import type { GlassParams } from "../types";
+
+export const OFFSCREEN_FORMAT: GPUTextureFormat = "rgba8unorm";
 
 // --- Parameters (official Figma: Refraction / depth / dispersion / frost / splay) ---
 // This step only uses Refraction + depth. Others are placeholders (kept at 0).
-export const PARAMS = {
+export const PARAMS: GlassParams = {
   refraction: 56,
   depth: 0.35,
   dispersion: 0,

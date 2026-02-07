@@ -1,67 +1,82 @@
-// @ts-nocheck
-import wgsl from "./shaders.wgsl?raw";
-import { loadBitmap, createImageTexture } from "./utils/image";
-import { PARAMS, MIN_W, MIN_H, RESIZE_MARGIN } from "./config/params";
+import { MIN_H, MIN_W, PARAMS, RESIZE_MARGIN } from "./config/params";
 import { createRenderer } from "./gpu/renderer";
 import { attachPointerHandlers } from "./interaction/pointer";
+import wgsl from "./shaders.wgsl?raw";
 import { createGlassState } from "./state/glassState";
+import type { StoppedRef } from "./types";
 import { showFallback } from "./utils/dom";
+import { createImageTexture, loadBitmap } from "./utils/image";
 import { dprClamped } from "./utils/math";
 
-async function main() {
-  const log = (...args) => console.log("[webgpu]", ...args);
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
+async function main(): Promise<void> {
+  const log = (...args: unknown[]) => console.log("[webgpu]", ...args);
   log("href =", location.href);
   log("isSecureContext =", window.isSecureContext);
   log("userAgent =", navigator.userAgent);
-  log("navigator.gpu =", "gpu" in navigator ? navigator.gpu : null);
 
-  if (!("gpu" in navigator)) {
+  const gpu = navigator.gpu;
+  log("navigator.gpu =", gpu ?? null);
+
+  if (!gpu) {
     showFallback("navigator.gpu 不存在：通常是未开启 WebGPU 实验特性，或不是安全上下文（需 https:// 或 http://localhost）。");
     return;
   }
 
-  let adapter;
+  let adapter: GPUAdapter | null = null;
   try {
-    adapter = await navigator.gpu.requestAdapter();
-  } catch (e) {
-    showFallback(`requestAdapter() 抛错：${e?.message || e}`);
+    adapter = await gpu.requestAdapter();
+  } catch (err) {
+    showFallback(`requestAdapter() 抛错：${errorMessage(err)}`);
     return;
   }
+
   if (!adapter) {
     showFallback("requestAdapter() 返回 null：通常是 WebGPU 未开启/被策略禁用/不在安全上下文/或系统不支持该实现。");
     return;
   }
+
   log("adapter =", adapter);
-  // These are often useful when debugging Safari/WebKit behavior.
   try {
     log("adapter.features =", [...adapter.features.values()]);
   } catch {
     // ignore
   }
 
-  let device;
+  let device: GPUDevice;
   try {
     device = await adapter.requestDevice();
-  } catch (e) {
-    showFallback(`requestDevice() 抛错：${e?.message || e}`);
+  } catch (err) {
+    showFallback(`requestDevice() 抛错：${errorMessage(err)}`);
     return;
   }
+
   device.lost.then((info) => {
     console.error("[webgpu] device lost:", info);
   });
+
   const queue = device.queue;
 
-  const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById("c"));
-  const ctx = /** @type {GPUCanvasContext} */ (canvas.getContext("webgpu"));
-  const glassUi = /** @type {HTMLDivElement | null} */ (document.getElementById("glass-ui"));
+  const canvasEl = document.getElementById("c");
+  if (!(canvasEl instanceof HTMLCanvasElement)) {
+    showFallback("未找到 #c 画布元素。请确认 index.html 页面结构是否完整。");
+    return;
+  }
+  const canvas = canvasEl;
+
+  const ctx = canvas.getContext("webgpu") as GPUCanvasContext | null;
   if (!ctx) {
-    showFallback("canvas.getContext('webgpu') 返回 null：可能是 WebGPU 未启用，或页面不是安全上下文。");
+    showFallback("canvas.getContext(webgpu) 返回 null：可能是 WebGPU 未启用，或页面不是安全上下文。");
     return;
   }
 
-  const presentationFormat = navigator.gpu.getPreferredCanvasFormat
-    ? navigator.gpu.getPreferredCanvasFormat()
-    : /** @type {GPUTextureFormat} */ ("bgra8unorm");
+  const glassUiNode = document.getElementById("glass-ui");
+  const glassUi = glassUiNode instanceof HTMLDivElement ? glassUiNode : null;
+
+  const presentationFormat = gpu.getPreferredCanvasFormat ? gpu.getPreferredCanvasFormat() : ("bgra8unorm" as GPUTextureFormat);
   log("presentationFormat =", presentationFormat);
 
   const sampler = device.createSampler({
@@ -73,31 +88,34 @@ async function main() {
 
   const imgUrl = new URL("./assets/left-image.png", import.meta.url).href;
   log("loading image =", imgUrl);
+
   const bitmap = await loadBitmap(imgUrl);
   log("image bitmap =", { width: bitmap.width, height: bitmap.height });
+
   const imageAspect = bitmap.width / Math.max(1, bitmap.height);
   const imageTex = createImageTexture(device, queue, bitmap);
 
-  const module = device.createShaderModule({ code: wgsl });
-  if (typeof module.getCompilationInfo === "function") {
+  const shaderModule = device.createShaderModule({ code: wgsl });
+  if (typeof shaderModule.getCompilationInfo === "function") {
     try {
-      const info = await module.getCompilationInfo();
-      if (info.messages?.length) {
+      const info = await shaderModule.getCompilationInfo();
+      if (info.messages.length > 0) {
         let hasError = false;
         console.groupCollapsed?.("[webgpu] shader compilation info");
-        for (const m of info.messages) {
-          const where = `line ${m.lineNum}:${m.linePos}`;
-          const msg = `${m.type.toUpperCase()} ${where} ${m.message}`;
-          if (m.type === "error") {
+        for (const message of info.messages) {
+          const where = `line ${message.lineNum}:${message.linePos}`;
+          const text = `${message.type.toUpperCase()} ${where} ${message.message}`;
+          if (message.type === "error") {
             hasError = true;
-            console.error(msg);
-          } else if (m.type === "warning") {
-            console.warn(msg);
+            console.error(text);
+          } else if (message.type === "warning") {
+            console.warn(text);
           } else {
-            console.log(msg);
+            console.log(text);
           }
         }
         console.groupEnd?.();
+
         if (hasError) {
           showFallback("WGSL 编译失败：请查看控制台中的 shader compilation info。");
           return;
@@ -105,8 +123,8 @@ async function main() {
       } else {
         log("shader compilation info: (no messages)");
       }
-    } catch (e) {
-      console.warn("[webgpu] getCompilationInfo() failed:", e?.message || e);
+    } catch (err) {
+      console.warn("[webgpu] getCompilationInfo() failed:", errorMessage(err));
     }
   }
 
@@ -115,10 +133,11 @@ async function main() {
   device.pushErrorScope("out-of-memory");
 
   const state = createGlassState({ minW: MIN_W, minH: MIN_H });
-  const updateGlassUi = (visible) => {
+  const updateGlassUi = (visible?: boolean): void => {
     if (!glassUi) return;
     if (typeof visible === "boolean") glassUi.hidden = !visible;
     if (glassUi.hidden) return;
+
     glassUi.style.left = `${state.glass.xCss}px`;
     glassUi.style.top = `${state.glass.yCss}px`;
     glassUi.style.width = `${state.glass.wCss}px`;
@@ -132,7 +151,7 @@ async function main() {
     ctx,
     sampler,
     imageTex,
-    module,
+    module: shaderModule,
     presentationFormat,
     imageAspect,
     state,
@@ -145,12 +164,14 @@ async function main() {
 
   // Pop error scopes after pipeline creation.
   {
-    const oom = await device.popErrorScope();
-    const val = await device.popErrorScope();
-    if (oom) console.error("[webgpu] OOM error:", oom);
-    if (val) console.error("[webgpu] Validation error:", val);
-    if (oom || val) {
-      const msg = String((val || oom)?.message || val || oom);
+    const oomError = await device.popErrorScope();
+    const validationError = await device.popErrorScope();
+
+    if (oomError) console.error("[webgpu] OOM error:", oomError);
+    if (validationError) console.error("[webgpu] Validation error:", validationError);
+
+    if (oomError || validationError) {
+      const msg = (validationError ?? oomError)?.message ?? String(validationError ?? oomError);
       showFallback(`GPU 校验失败：${msg}`);
       return;
     }
@@ -158,9 +179,11 @@ async function main() {
 
   // Render on demand (prevents log/error spam if something goes wrong).
   let rafPending = false;
-  const stoppedRef = { value: false };
-  const requestRender = () => {
+  const stoppedRef: StoppedRef = { value: false };
+
+  const requestRender = (): void => {
     if (stoppedRef.value || rafPending) return;
+
     rafPending = true;
     requestAnimationFrame(() => {
       rafPending = false;
@@ -168,10 +191,10 @@ async function main() {
         renderer.ensureCanvasConfigured();
         renderer.writeUniforms();
         renderer.render();
-      } catch (e) {
+      } catch (err) {
         stoppedRef.value = true;
-        console.error("[webgpu] render failed:", e?.message || e);
-        showFallback(`渲染失败：${e?.message || e}`);
+        console.error("[webgpu] render failed:", errorMessage(err));
+        showFallback(`渲染失败：${errorMessage(err)}`);
       }
     });
   };
@@ -179,8 +202,9 @@ async function main() {
   // If Safari fires a GPU error, stop further renders to avoid spamming the console.
   device.onuncapturederror = (ev) => {
     stoppedRef.value = true;
-    console.error("[webgpu] uncapturederror:", ev.error?.message || ev.error);
-    showFallback(`GPU 错误：${ev.error?.message || ev.error}`);
+    const msg = ev.error?.message ?? String(ev.error);
+    console.error("[webgpu] uncapturederror:", msg);
+    showFallback(`GPU 错误：${msg}`);
   };
 
   attachPointerHandlers({
@@ -197,7 +221,7 @@ async function main() {
   requestRender();
 }
 
-main().catch((err) => {
+main().catch((err: unknown) => {
   console.error(err);
-  showFallback(`main() 未捕获异常：${err?.message || err}`);
+  showFallback(`main() 未捕获异常：${errorMessage(err)}`);
 });

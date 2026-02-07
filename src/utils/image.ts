@@ -1,13 +1,12 @@
-// @ts-nocheck
-export async function loadBitmap(url) {
+export async function loadBitmap(url: string): Promise<ImageBitmap> {
   const img = new Image();
   img.decoding = "async";
   img.src = url;
   await img.decode();
-  return await createImageBitmap(img);
+  return createImageBitmap(img);
 }
 
-export function createImageTexture(device, queue, bitmap) {
+export function createImageTexture(device: GPUDevice, queue: GPUQueue, bitmap: ImageBitmap): GPUTexture {
   const texture = device.createTexture({
     size: { width: bitmap.width, height: bitmap.height },
     format: "rgba8unorm",

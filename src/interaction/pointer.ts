@@ -1,12 +1,17 @@
-// @ts-nocheck
+import type { DragMode, GlassRect, PointerHandlersDeps, ResizeEdges } from "../types";
 import { sdRoundRect } from "../utils/math";
 
-function pointerPosCss(canvas, ev) {
+interface HitResult {
+  mode: DragMode | null;
+  edges: ResizeEdges;
+}
+
+function pointerPosCss(canvas: HTMLCanvasElement, ev: PointerEvent): { x: number; y: number } {
   const r = canvas.getBoundingClientRect();
   return { x: ev.clientX - r.left, y: ev.clientY - r.top };
 }
 
-function hitTestGlass(glass, px, py, resizeMargin) {
+function hitTestGlass(glass: GlassRect, px: number, py: number, resizeMargin: number): HitResult {
   const cx = glass.xCss + glass.wCss * 0.5;
   const cy = glass.yCss + glass.hCss * 0.5;
   const halfW = glass.wCss * 0.5;
@@ -51,15 +56,16 @@ function hitTestGlass(glass, px, py, resizeMargin) {
     nearB = !nearT;
   }
 
-  const edges = active
+  const edges: ResizeEdges = active
     ? { l: nearL, r: nearR, t: nearT, b: nearB }
     : { l: false, r: false, t: false, b: false };
+
   const wantsResize = active && (nearL || nearR || nearT || nearB);
-  const mode = wantsResize ? "resize" : inside ? "move" : null;
+  const mode: DragMode | null = wantsResize ? "resize" : inside ? "move" : null;
   return { mode, edges };
 }
 
-function cursorForHit(mode, edges) {
+function cursorForHit(mode: DragMode | null, edges: ResizeEdges): string {
   if (mode === "resize") {
     const { l, r, t, b } = edges;
     if ((l && t) || (r && b)) return "nwse-resize";
@@ -79,8 +85,8 @@ export function attachPointerHandlers({
   requestRender,
   updateGlassUi,
   stoppedRef,
-}) {
-  const onPointerDown = (ev) => {
+}: PointerHandlersDeps): () => void {
+  const onPointerDown = (ev: PointerEvent): void => {
     if (stoppedRef.value) return;
     if (!ev.isPrimary || ev.button !== 0) return;
 
@@ -98,7 +104,7 @@ export function attachPointerHandlers({
     requestRender();
   };
 
-  const onPointerMove = (ev) => {
+  const onPointerMove = (ev: PointerEvent): void => {
     if (stoppedRef.value) return;
     const p = pointerPosCss(canvas, ev);
     ensureCanvasConfigured();
@@ -119,9 +125,9 @@ export function attachPointerHandlers({
     requestRender();
   };
 
-  const onPointerUp = (ev) => {
+  const onPointerUp = (ev: PointerEvent): void => {
     try {
-      if (canvas.hasPointerCapture?.(ev.pointerId)) canvas.releasePointerCapture(ev.pointerId);
+      if (canvas.hasPointerCapture(ev.pointerId)) canvas.releasePointerCapture(ev.pointerId);
     } catch {
       // ignore
     }
@@ -129,12 +135,12 @@ export function attachPointerHandlers({
     requestRender();
   };
 
-  const onLostCapture = (ev) => {
+  const onLostCapture = (ev: PointerEvent): void => {
     state.endDrag(ev.pointerId);
     requestRender();
   };
 
-  const onPointerLeave = () => {
+  const onPointerLeave = (): void => {
     if (state.drag.active) return;
     canvas.style.cursor = "default";
     updateGlassUi(false);

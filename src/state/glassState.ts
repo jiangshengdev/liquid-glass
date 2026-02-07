@@ -1,12 +1,17 @@
-// @ts-nocheck
+import type { CanvasState, DragMode, DragState, GlassRect, GlassState, ResizeEdges } from "../types";
 import { clamp } from "../utils/math";
 
-export function createGlassState({ minW, minH }) {
+interface CreateGlassStateOptions {
+  minW: number;
+  minH: number;
+}
+
+export function createGlassState({ minW, minH }: CreateGlassStateOptions): GlassState {
   // Persistent glass rect (CSS px) so resizing the window does not reset placement.
-  const glass = { xCss: 0, yCss: 0, wCss: 0, hCss: 0 };
+  const glass: GlassRect = { xCss: 0, yCss: 0, wCss: 0, hCss: 0 };
   let glassInited = false;
 
-  const canvas = {
+  const canvas: CanvasState = {
     pxW: 0,
     pxH: 0,
     dpr: 1,
@@ -14,9 +19,9 @@ export function createGlassState({ minW, minH }) {
     cssH: 0,
   };
 
-  const drag = {
+  const drag: DragState = {
     active: false,
-    mode: /** @type {"move" | "resize"} */ ("move"),
+    mode: "move",
     pointerId: -1,
     startPx: 0,
     startPy: 0,
@@ -30,7 +35,7 @@ export function createGlassState({ minW, minH }) {
     b: false,
   };
 
-  function initGlassDefault(cssW, cssH) {
+  function initGlassDefault(cssW: number, cssH: number): void {
     const w = Math.min(cssW * 0.8, 920);
     const h = Math.min(cssH * 0.32, 280);
     glass.wCss = Math.max(minW, Math.min(cssW, w));
@@ -42,7 +47,7 @@ export function createGlassState({ minW, minH }) {
     glassInited = true;
   }
 
-  function clampGlass(cssW, cssH) {
+  function clampGlass(cssW: number, cssH: number): void {
     glass.wCss = clamp(glass.wCss, minW, Math.max(minW, cssW));
     glass.hCss = clamp(glass.hCss, minH, Math.max(minH, cssH));
     // Capsule constraint: radius = height/2 => height should not exceed width.
@@ -51,7 +56,7 @@ export function createGlassState({ minW, minH }) {
     glass.yCss = clamp(glass.yCss, 0, Math.max(0, cssH - glass.hCss));
   }
 
-  function updateCanvasState({ pxW, pxH, dpr, cssW, cssH }) {
+  function updateCanvasState({ pxW, pxH, dpr, cssW, cssH }: CanvasState): boolean {
     const changed = pxW !== canvas.pxW || pxH !== canvas.pxH || dpr !== canvas.dpr;
     canvas.pxW = pxW;
     canvas.pxH = pxH;
@@ -64,7 +69,7 @@ export function createGlassState({ minW, minH }) {
     return changed;
   }
 
-  function startDrag(mode, pointerId, px, py, edges) {
+  function startDrag(mode: DragMode, pointerId: number, px: number, py: number, edges?: Partial<ResizeEdges>): void {
     drag.active = true;
     drag.mode = mode;
     drag.pointerId = pointerId;
@@ -80,13 +85,13 @@ export function createGlassState({ minW, minH }) {
     drag.b = !!edges?.b;
   }
 
-  function endDrag(pointerId) {
+  function endDrag(pointerId: number): void {
     if (!drag.active || pointerId !== drag.pointerId) return;
     drag.active = false;
     drag.pointerId = -1;
   }
 
-  function applyMove(px, py) {
+  function applyMove(px: number, py: number): void {
     const dx = px - drag.startPx;
     const dy = py - drag.startPy;
     glass.xCss = drag.startX + dx;
@@ -94,7 +99,7 @@ export function createGlassState({ minW, minH }) {
     clampGlass(canvas.cssW, canvas.cssH);
   }
 
-  function applyResize(px, py) {
+  function applyResize(px: number, py: number): void {
     const dx = px - drag.startPx;
     const dy = py - drag.startPy;
 
