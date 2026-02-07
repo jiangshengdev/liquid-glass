@@ -79,10 +79,10 @@ export function createPipelines({
 
   const scenePipeline = device.createRenderPipeline({
     layout: pipelineLayout,
-    vertex: { module, entryPoint: "vs_fullscreen" },
+    vertex: { module, entryPoint: "vertex_fullscreen" },
     fragment: {
       module,
-      entryPoint: "fs_scene",
+      entryPoint: "fragment_scene",
       targets: [{ format: OFFSCREEN_FORMAT }],
     },
     primitive: { topology: "triangle-list" },
@@ -90,10 +90,10 @@ export function createPipelines({
 
   const blurHorizontalPipeline = device.createRenderPipeline({
     layout: pipelineLayout,
-    vertex: { module, entryPoint: "vs_fullscreen" },
+    vertex: { module, entryPoint: "vertex_fullscreen" },
     fragment: {
       module,
-      entryPoint: "fs_blur_horizontal",
+      entryPoint: "fragment_blur_horizontal",
       targets: [{ format: OFFSCREEN_FORMAT }],
     },
     primitive: { topology: "triangle-list" },
@@ -101,10 +101,10 @@ export function createPipelines({
 
   const blurVerticalPipeline = device.createRenderPipeline({
     layout: pipelineLayout,
-    vertex: { module, entryPoint: "vs_fullscreen" },
+    vertex: { module, entryPoint: "vertex_fullscreen" },
     fragment: {
       module,
-      entryPoint: "fs_blur_vertical",
+      entryPoint: "fragment_blur_vertical",
       targets: [{ format: OFFSCREEN_FORMAT }],
     },
     primitive: { topology: "triangle-list" },
@@ -112,10 +112,10 @@ export function createPipelines({
 
   const presentPipeline = device.createRenderPipeline({
     layout: pipelineLayout,
-    vertex: { module, entryPoint: "vs_fullscreen" },
+    vertex: { module, entryPoint: "vertex_fullscreen" },
     fragment: {
       module,
-      entryPoint: "fs_present",
+      entryPoint: "fragment_present",
       targets: [{ format: presentationFormat }],
     },
     primitive: { topology: "triangle-list" },
@@ -123,10 +123,10 @@ export function createPipelines({
 
   const overlayPipeline = device.createRenderPipeline({
     layout: pipelineLayout,
-    vertex: { module, entryPoint: "vs_fullscreen" },
+    vertex: { module, entryPoint: "vertex_fullscreen" },
     fragment: {
       module,
-      entryPoint: "fs_overlay",
+      entryPoint: "fragment_overlay",
       targets: [
         {
           format: presentationFormat,
