@@ -1,9 +1,9 @@
 # liquid-glass（WebGPU：静态折射 + Frost 高斯模糊）
 
-目标：用纯 WebGPU 做一个可交互的“玻璃胶囊”探索 Demo：
+目标：用纯 WebGPU 做一个可交互的“玻璃胶囊”探索 Demo。
 
 - 静态、规则的折射（中心基本不变，边缘有秩序偏折）
-- Frost（高斯模糊），用于“磨砂”观感（当前默认 `frost = 4`）
+- Frost（高斯模糊）用于“磨砂”观感（默认 `frost = 4`）
 - 不引入任何 time/动画/噪声（保持完全静态）
 
 Figma：
@@ -24,12 +24,36 @@ Safari Technology Preview 启用 WebGPU：
 
 - Develop → Experimental Features → WebGPU
 
+## 校验
+
+```bash
+npm run test
+npm run lint
+npm run build
+```
+
 ## 交互
 
 - 拖拽玻璃内部：移动位置
 - 拖拽玻璃边缘/角落：调整尺寸
 
-说明：
+## 核心参数位置
 
-- 当前是“静态”效果（无动画、无噪声），折射模型为规则透镜场：中心基本不变、边缘有秩序偏折。
-- Frost（高斯模糊）在 `src/main.js` 的 `PARAMS.frost` 设置（默认 4）。
+- 玻璃参数：`/Users/jiangsheng/GitHub/liquid-glass/src/config/params.ts`
+- Shader：`/Users/jiangsheng/GitHub/liquid-glass/src/shaders.wgsl`
+
+## 重构后模块结构
+
+- 入口编排：`/Users/jiangsheng/GitHub/liquid-glass/src/webgpu-main.ts`
+- 启动初始化：`/Users/jiangsheng/GitHub/liquid-glass/src/app/bootstrap.ts`
+- 运行时调度：`/Users/jiangsheng/GitHub/liquid-glass/src/app/runtime.ts`
+- 渲染层：`/Users/jiangsheng/GitHub/liquid-glass/src/gpu/`
+  - `renderer.ts`（编排）
+  - `pipelines.ts`（pipeline/layout）
+  - `offscreenTargets.ts`（离屏纹理生命周期）
+  - `renderPasses.ts`（pass 编码）
+  - `uniforms.ts`（uniform 打包）
+- 交互层：`/Users/jiangsheng/GitHub/liquid-glass/src/interaction/`
+  - `pointer.ts`（事件绑定）
+  - `hitTest.ts`（纯命中逻辑）
+- 单元测试：`/Users/jiangsheng/GitHub/liquid-glass/tests/`
