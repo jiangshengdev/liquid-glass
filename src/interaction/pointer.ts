@@ -1,6 +1,12 @@
 import type { PointerHandlersDeps } from "../types/interaction";
 import { cursorForHit, hitTestGlass } from "./hit-test";
 
+/**
+ * 将 PointerEvent 坐标转换为相对画布左上角的 CSS 像素坐标。
+ * @param canvas 目标画布。
+ * @param event 指针事件。
+ * @returns 画布内坐标。
+ */
 function pointerPositionCss(
   canvas: HTMLCanvasElement,
   event: PointerEvent,
@@ -12,6 +18,11 @@ function pointerPositionCss(
   };
 }
 
+/**
+ * 绑定画布指针事件，处理拖拽移动与缩放。
+ * @param deps 交互依赖。
+ * @returns 解绑函数。
+ */
 export function attachPointerHandlers({
   canvas,
   state,
@@ -21,6 +32,7 @@ export function attachPointerHandlers({
   updateGlassUi,
   stoppedRef,
 }: PointerHandlersDeps): () => void {
+  // 按下时：命中检测并进入拖拽状态。
   const onPointerDown = (event: PointerEvent): void => {
     if (stoppedRef.value) return;
     if (!event.isPrimary || event.button !== 0) return;
@@ -51,6 +63,7 @@ export function attachPointerHandlers({
     requestRender();
   };
 
+  // 移动时：未拖拽则更新悬停光标，拖拽中则更新几何状态。
   const onPointerMove = (event: PointerEvent): void => {
     if (stoppedRef.value) return;
     const pointerPosition = pointerPositionCss(canvas, event);
@@ -78,22 +91,25 @@ export function attachPointerHandlers({
     requestRender();
   };
 
+  // 抬起/取消时：退出拖拽并触发一次重绘。
   const onPointerUp = (event: PointerEvent): void => {
     try {
       if (canvas.hasPointerCapture(event.pointerId))
         canvas.releasePointerCapture(event.pointerId);
     } catch {
-      // ignore
+      // 某些浏览器在竞争态下会抛错，忽略即可。
     }
     state.endDrag(event.pointerId);
     requestRender();
   };
 
+  // 丢失 capture 时也要收尾，避免状态卡住。
   const onLostCapture = (event: PointerEvent): void => {
     state.endDrag(event.pointerId);
     requestRender();
   };
 
+  // 鼠标离开且未拖拽时，恢复默认视觉状态。
   const onPointerLeave = (): void => {
     if (state.drag.active) return;
     canvas.style.cursor = "default";

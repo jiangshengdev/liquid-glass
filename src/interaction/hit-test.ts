@@ -1,17 +1,27 @@
 import type { DragMode, GlassRect, ResizeEdges } from "../types/common";
 import { sdRoundRect } from "../utils/math";
 
+/** 命中测试结果。 */
 export interface HitResult {
   mode: DragMode | null;
   edges: ResizeEdges;
 }
 
+/**
+ * 对玻璃区域执行命中测试，返回移动或缩放模式。
+ * @param glass 玻璃矩形。
+ * @param pointerLeft 指针横坐标（CSS 像素）。
+ * @param pointerTop 指针纵坐标（CSS 像素）。
+ * @param resizeMargin 边缘缩放命中阈值。
+ * @returns 命中模式与边缘信息。
+ */
 export function hitTestGlass(
   glass: GlassRect,
   pointerLeft: number,
   pointerTop: number,
   resizeMargin: number,
 ): HitResult {
+  // 先在圆角矩形 SDF 空间中判断是否处于内部。
   const centerLeft = glass.left + glass.width * 0.5;
   const centerTop = glass.top + glass.height * 0.5;
   const halfWidth = glass.width * 0.5;
@@ -26,7 +36,7 @@ export function hitTestGlass(
   );
   const inside = signedDistance <= 0;
 
-  // Move uses rounded shape, while resize handles stay on the AABB like design tools.
+  // 移动命中基于圆角形体，缩放命中仍按外接矩形边缘，贴近设计工具手感。
   const rectLeft = glass.left;
   const rectTop = glass.top;
   const rectRight = glass.left + glass.width;
@@ -49,6 +59,7 @@ export function hitTestGlass(
   const absoluteDistanceTop = Math.abs(distanceTop);
   const absoluteDistanceBottom = Math.abs(distanceBottom);
 
+  // 当左右同时接近时，只保留最近的一侧，避免双边抖动。
   let nearLeft = absoluteDistanceLeft < resizeMargin;
   let nearRight = absoluteDistanceRight < resizeMargin;
   if (nearLeft && nearRight) {
@@ -78,6 +89,12 @@ export function hitTestGlass(
   return { mode, edges };
 }
 
+/**
+ * 根据命中结果映射鼠标样式。
+ * @param mode 命中模式。
+ * @param edges 命中边集合。
+ * @returns 对应 CSS cursor 值。
+ */
 export function cursorForHit(
   mode: DragMode | null,
   edges: ResizeEdges,

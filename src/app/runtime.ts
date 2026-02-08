@@ -2,6 +2,11 @@ import type { StoppedRef } from "../types/common";
 import type { Renderer } from "../types/renderer";
 import { showFallback } from "../utils/dom";
 
+/**
+ * 统一异常文本，避免 `unknown` 直接输出。
+ * @param err 未知异常。
+ * @returns 可读错误文本。
+ */
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
@@ -18,6 +23,11 @@ export interface Runtime {
   dispose(): void;
 }
 
+/**
+ * 构建运行时调度器：管理渲染请求、窗口监听与资源清理。
+ * @param options 运行时依赖。
+ * @returns 统一运行时对象。
+ */
 export function createRuntime({
   device,
   renderer,
@@ -28,13 +38,16 @@ export function createRuntime({
   const cleanups: Array<() => void> = [];
 
   const requestRender = (): void => {
+    // 已停止或已有待执行帧时，直接忽略重复请求。
     if (stoppedRef.value || rafPending) return;
 
     rafPending = true;
     requestAnimationFrame(() => {
       rafPending = false;
       try {
+        // 每帧前先确保画布尺寸与配置有效。
         renderer.ensureCanvasConfigured();
+        // 再写入最新 uniform，确保渲染使用最新状态。
         renderer.writeUniforms();
         renderer.render();
       } catch (err) {
@@ -72,7 +85,7 @@ export function createRuntime({
       try {
         cleanup();
       } catch {
-        // ignore
+        // 清理阶段异常不应阻塞后续清理。
       }
     }
   };

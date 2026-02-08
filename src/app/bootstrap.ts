@@ -2,10 +2,18 @@ import wgsl from "../shaders.wgsl?raw";
 import { showFallback } from "../utils/dom";
 import { createImageTexture, loadBitmap } from "../utils/image";
 
+/**
+ * 将未知异常转换为可读文本。
+ * @param err 未知异常对象。
+ * @returns 标准化错误信息。
+ */
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
+/**
+ * 启动阶段成功产物：渲染器创建所需的全部 WebGPU 与页面资源。
+ */
 export interface BootstrapResult {
   log: (...args: unknown[]) => void;
   device: GPUDevice;
@@ -20,7 +28,12 @@ export interface BootstrapResult {
   shaderModule: GPUShaderModule;
 }
 
+/**
+ * 执行 WebGPU 启动流程：能力检测、设备申请、画布绑定、纹理加载与 Shader 编译。
+ * @returns 成功返回启动结果，失败返回 `null` 并展示回退提示。
+ */
 export async function bootstrapWebGpuApp(): Promise<BootstrapResult | null> {
+  // 统一带前缀日志，便于区分浏览器与应用输出。
   const log = (...args: unknown[]) => console.log("[webgpu]", ...args);
   log("href =", location.href);
   log("isSecureContext =", window.isSecureContext);
@@ -55,7 +68,7 @@ export async function bootstrapWebGpuApp(): Promise<BootstrapResult | null> {
   try {
     log("adapter.features =", [...adapter.features.values()]);
   } catch {
-    // ignore
+    // 忽略特性枚举异常，避免影响主流程。
   }
 
   let device: GPUDevice;
@@ -119,6 +132,8 @@ export async function bootstrapWebGpuApp(): Promise<BootstrapResult | null> {
       const info = await shaderModule.getCompilationInfo();
       if (info.messages.length > 0) {
         let hasError = false;
+
+        // 分组打印编译消息，便于快速定位行号与类型。
         console.groupCollapsed?.("[webgpu] shader compilation info");
         for (const message of info.messages) {
           const where = `line ${message.lineNum}:${message.linePos}`;
@@ -144,6 +159,7 @@ export async function bootstrapWebGpuApp(): Promise<BootstrapResult | null> {
         log("shader compilation info: (no messages)");
       }
     } catch (err) {
+      // 某些实现可能不支持完整编译信息接口，这里仅告警。
       console.warn("[webgpu] getCompilationInfo() failed:", errorMessage(err));
     }
   }

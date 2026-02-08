@@ -7,12 +7,17 @@ interface EncodePassOptions {
   pipelines: RendererPipelines;
 }
 
+/**
+ * 编码离屏场景与双通道高斯模糊。
+ * @param options 编码参数。
+ * @returns 无返回值。
+ */
 export function encodeScenePasses({
   encoder,
   targets,
   pipelines,
 }: EncodePassOptions): void {
-  // Pass 1: render cover-mapped image into sceneTexture.
+  // 通道 1：将覆盖映射后的原图写入 sceneTexture。
   {
     const scenePass = encoder.beginRenderPass({
       colorAttachments: [
@@ -31,7 +36,7 @@ export function encodeScenePasses({
     scenePass.end();
   }
 
-  // Pass 2: horizontal blur -> horizontalBlurTexture.
+  // 通道 2：执行横向模糊，输出到 horizontalBlurTexture。
   {
     const blurHorizontalPass = encoder.beginRenderPass({
       colorAttachments: [
@@ -50,7 +55,7 @@ export function encodeScenePasses({
     blurHorizontalPass.end();
   }
 
-  // Pass 3: vertical blur -> verticalBlurTexture.
+  // 通道 3：执行纵向模糊，输出到 verticalBlurTexture。
   {
     const blurVerticalPass = encoder.beginRenderPass({
       colorAttachments: [
@@ -77,6 +82,11 @@ interface EncodeFinalPassOptions {
   pipelines: RendererPipelines;
 }
 
+/**
+ * 编码最终上屏通道：先绘制场景，再叠加玻璃效果。
+ * @param options 编码参数。
+ * @returns 无返回值。
+ */
 export function encodeFinalPass({
   encoder,
   canvasContext,

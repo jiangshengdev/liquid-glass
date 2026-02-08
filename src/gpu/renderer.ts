@@ -7,6 +7,11 @@ import { encodeFinalPass, encodeScenePasses } from "./render-passes";
 import { packUniforms } from "./uniforms";
 import type { Renderer, RendererDeps } from "../types/renderer";
 
+/**
+ * 创建渲染器：负责画布配置、uniform 写入、离屏 Pass 编码与提交。
+ * @param deps 渲染依赖集合。
+ * @returns 渲染器实例。
+ */
 export function createRenderer({
   device,
   queue,
@@ -24,6 +29,7 @@ export function createRenderer({
   updateGlassUi,
   isGlassUiHidden,
 }: RendererDeps): Renderer {
+  // uniform 缓冲区固定 256 字节，满足 WebGPU 最小对齐要求。
   const uniformBuffer = device.createBuffer({
     size: 256,
     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
@@ -41,8 +47,13 @@ export function createRenderer({
   let targets: OffscreenTargets | null = null;
   let sceneDirty = true;
 
+  // 6 个 vec4 对应 24 个 float。
   const uniformFloat32Data = new Float32Array(24);
 
+  /**
+   * 重建离屏纹理与 bind group。
+   * @returns 无返回值。
+   */
   function recreateOffscreenTargets(): void {
     targets = createOffscreenTargets({
       device,
@@ -55,6 +66,10 @@ export function createRenderer({
     sceneDirty = true;
   }
 
+  /**
+   * 同步画布像素尺寸并按需配置 CanvasContext。
+   * @returns 画布尺寸或 DPR 是否发生变化。
+   */
   function ensureCanvasConfigured(): boolean {
     const devicePixelRatio = devicePixelRatioClamped();
     const cssWidth = canvas.clientWidth;
@@ -92,6 +107,10 @@ export function createRenderer({
     return changed;
   }
 
+  /**
+   * 将当前场景参数打包并写入 GPU uniform 缓冲区。
+   * @returns 无返回值。
+   */
   function writeUniforms(): void {
     packUniforms(
       {
@@ -110,19 +129,23 @@ export function createRenderer({
     queue.writeBuffer(uniformBuffer, 0, uniformFloat32Data);
   }
 
+  /**
+   * 执行一帧渲染命令编码与提交。
+   * @returns 无返回值。
+   */
   function render(): void {
-    // Guard: some Safari builds may briefly return a zero-sized drawable on resize.
+    // 保护：Safari 某些版本在 resize 瞬间可能给出 0 尺寸 drawable。
     if (canvas.width <= 1 || canvas.height <= 1 || !targets) return;
 
     const encoder = device.createCommandEncoder();
 
-    // (Re)build the offscreen scene + Gaussian blur only when needed.
+    // 仅在场景脏时重算离屏场景与高斯模糊。
     if (sceneDirty) {
       encodeScenePasses({ encoder, targets, pipelines });
       sceneDirty = false;
     }
 
-    // Final pass: present scene + overlay glass.
+    // 最终通道：先绘制场景，再叠加玻璃层。
     encodeFinalPass({ encoder, canvasContext, targets, pipelines });
 
     queue.submit([encoder.finish()]);

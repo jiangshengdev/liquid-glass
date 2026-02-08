@@ -7,11 +7,16 @@ interface CreateGlassStateOptions {
   minHeight: number;
 }
 
+/**
+ * 创建玻璃状态容器，集中管理画布尺寸、拖拽状态与几何约束。
+ * @param options 最小宽高约束。
+ * @returns 玻璃状态对象。
+ */
 export function createGlassState({
   minWidth,
   minHeight,
 }: CreateGlassStateOptions): GlassState {
-  // Persistent glass rect (CSS pixels) so resizing the window does not reset placement.
+  // 持久化玻璃矩形（CSS 像素），避免窗口变化时重置位置。
   const glass: GlassRect = { left: 0, top: 0, width: 0, height: 0 };
   let glassInited = false;
 
@@ -39,18 +44,30 @@ export function createGlassState({
     bottom: false,
   };
 
+  /**
+   * 初始化默认玻璃尺寸与居中位置。
+   * @param cssWidth 画布 CSS 宽度。
+   * @param cssHeight 画布 CSS 高度。
+   * @returns 无返回值。
+   */
   function initGlassDefault(cssWidth: number, cssHeight: number): void {
     const nextWidth = Math.min(cssWidth * 0.8, 920);
     const nextHeight = Math.min(cssHeight * 0.32, 280);
     glass.width = Math.max(minWidth, Math.min(cssWidth, nextWidth));
     glass.height = Math.max(minHeight, Math.min(cssHeight, nextHeight));
-    // Keep a horizontal capsule by default.
+    // 默认保持横向胶囊外观。
     glass.width = Math.max(glass.width, glass.height);
     glass.left = (cssWidth - glass.width) * 0.5;
     glass.top = (cssHeight - glass.height) * 0.5;
     glassInited = true;
   }
 
+  /**
+   * 对玻璃矩形执行尺寸与边界夹取。
+   * @param cssWidth 画布 CSS 宽度。
+   * @param cssHeight 画布 CSS 高度。
+   * @returns 无返回值。
+   */
   function clampGlass(cssWidth: number, cssHeight: number): void {
     glass.width = clamp(glass.width, minWidth, Math.max(minWidth, cssWidth));
     glass.height = clamp(
@@ -58,12 +75,17 @@ export function createGlassState({
       minHeight,
       Math.max(minHeight, cssHeight),
     );
-    // Capsule constraint: radius = height/2 => height should not exceed width.
+    // 胶囊约束：半径 = 高度 / 2，因此高度不能大于宽度。
     glass.height = Math.min(glass.height, glass.width);
     glass.left = clamp(glass.left, 0, Math.max(0, cssWidth - glass.width));
     glass.top = clamp(glass.top, 0, Math.max(0, cssHeight - glass.height));
   }
 
+  /**
+   * 更新画布状态，并在必要时初始化玻璃默认值。
+   * @param nextCanvas 新画布状态。
+   * @returns 像素尺寸或 DPR 是否发生变化。
+   */
   function updateCanvasState({
     pixelWidth,
     pixelHeight,
@@ -86,6 +108,15 @@ export function createGlassState({
     return changed;
   }
 
+  /**
+   * 启动一次拖拽会话。
+   * @param mode 拖拽模式。
+   * @param pointerId 当前指针 ID。
+   * @param pointerLeft 指针横坐标。
+   * @param pointerTop 指针纵坐标。
+   * @param edges 可选命中边信息。
+   * @returns 无返回值。
+   */
   function startDrag(
     mode: DragMode,
     pointerId: number,
@@ -108,12 +139,23 @@ export function createGlassState({
     drag.bottom = !!edges?.bottom;
   }
 
+  /**
+   * 结束拖拽会话。
+   * @param pointerId 指针 ID。
+   * @returns 无返回值。
+   */
   function endDrag(pointerId: number): void {
     if (!drag.active || pointerId !== drag.pointerId) return;
     drag.active = false;
     drag.pointerId = -1;
   }
 
+  /**
+   * 应用移动拖拽。
+   * @param pointerLeft 指针横坐标。
+   * @param pointerTop 指针纵坐标。
+   * @returns 无返回值。
+   */
   function applyMove(pointerLeft: number, pointerTop: number): void {
     const deltaLeft = pointerLeft - drag.startPointerLeft;
     const deltaTop = pointerTop - drag.startPointerTop;
@@ -122,6 +164,12 @@ export function createGlassState({
     clampGlass(canvas.cssWidth, canvas.cssHeight);
   }
 
+  /**
+   * 应用缩放拖拽，包含最小尺寸、边界夹取与胶囊约束。
+   * @param pointerLeft 指针横坐标。
+   * @param pointerTop 指针纵坐标。
+   * @returns 无返回值。
+   */
   function applyResize(pointerLeft: number, pointerTop: number): void {
     const deltaLeft = pointerLeft - drag.startPointerLeft;
     const deltaTop = pointerTop - drag.startPointerTop;
@@ -136,7 +184,7 @@ export function createGlassState({
     if (drag.top) top += deltaTop;
     if (drag.bottom) bottom += deltaTop;
 
-    // Min size.
+    // 先保证最小宽高，优先固定未拖拽边。
     if (right - left < minWidth) {
       if (drag.left && !drag.right) left = right - minWidth;
       else right = left + minWidth;
@@ -146,7 +194,7 @@ export function createGlassState({
       else bottom = top + minHeight;
     }
 
-    // Clamp to canvas bounds (prefer clamping the dragged edge).
+    // 再做边界夹取：优先约束正在被拖拽的边。
     if (drag.left && !drag.right) {
       left = clamp(left, 0, right - minWidth);
     } else if (drag.right && !drag.left) {
@@ -167,7 +215,7 @@ export function createGlassState({
       bottom = top + nextHeight;
     }
 
-    // Capsule constraint: keep height <= width (so radius = height/2 stays valid).
+    // 最后应用胶囊约束：始终保持 height <= width。
     const nextWidth = right - left;
     let nextHeight = bottom - top;
     if (nextHeight > nextWidth) {
