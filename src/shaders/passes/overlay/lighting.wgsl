@@ -1,3 +1,14 @@
+//! 覆盖层边缘光照计算。
+
+/// 基于法线方向叠加主次高光。
+///
+/// # 参数
+/// - `refractedColor`: 折射阶段输出的基础颜色。
+/// - `surfaceNormal`: 覆盖层法线。
+/// - `distanceInside`: 当前片元到边缘的内部距离。
+///
+/// # 返回
+/// - 叠加高光后的最终颜色。
 fn apply_overlay_lighting(
   refractedColor: vec3f,
   surfaceNormal: vec2f,

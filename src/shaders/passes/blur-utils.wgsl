@@ -1,3 +1,13 @@
+//! 高斯模糊辅助函数。
+
+/// 计算指定偏移位置的高斯权重。
+///
+/// # 参数
+/// - `sampleOffset`: 当前采样点相对中心的像素偏移。
+/// - `sigma`: 高斯分布标准差。
+///
+/// # 返回
+/// - 当前偏移对应的权重值。
 fn gaussian_sample_weight(sampleOffset: f32, sigma: f32) -> f32 {
   // 避免 sigma 为 0。
   let sigmaSafe = max(0.0001, sigma);
@@ -7,6 +17,14 @@ fn gaussian_sample_weight(sampleOffset: f32, sigma: f32) -> f32 {
   return exp(-0.5 * sampleOffset * sampleOffset * varianceInverse);
 }
 
+/// 对输入纹理执行单轴可分离高斯模糊。
+///
+/// # 参数
+/// - `textureCoordinates`: 当前片元纹理坐标。
+/// - `blurDirection`: 模糊方向（x 或 y 轴）。
+///
+/// # 返回
+/// - 模糊后的 RGB 颜色。
 fn blur_single_axis(textureCoordinates: vec2f, blurDirection: vec2f) -> vec3f {
   // 可分离高斯模糊。
   // 获取画布尺寸并避免 0。

@@ -1,3 +1,12 @@
+//! 覆盖层折射颜色采样与混合。
+
+/// 采样清晰/模糊背景并混合得到折射颜色。
+///
+/// # 参数
+/// - `refractedCoordinates`: 折射后的纹理采样坐标。
+///
+/// # 返回
+/// - 混合磨砂后的折射颜色。
 fn compute_overlay_refracted_color(refractedCoordinates: vec2f) -> vec3f {
   // 折射：按偏移 UV 采样背景（无动画）。
   // 磨砂：使用独立 pass 预先模糊的结果。

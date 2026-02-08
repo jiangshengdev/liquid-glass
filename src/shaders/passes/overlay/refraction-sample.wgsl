@@ -1,3 +1,13 @@
+//! 覆盖层折射采样坐标计算。
+
+/// 根据法线与深度衰减计算折射采样坐标。
+///
+/// # 参数
+/// - `geometry`: 覆盖层几何上下文。
+/// - `surfaceNormal`: 覆盖层法线方向。
+///
+/// # 返回
+/// - 含内部距离与折射采样坐标的中间结果。
 fn compute_overlay_refraction_sample(
   geometry: OverlayGeometry,
   surfaceNormal: vec2f,

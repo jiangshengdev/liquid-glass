@@ -1,3 +1,6 @@
+//! 全局共享类型与绑定槽定义。
+
+/// 场景统一参数，按固定布局写入 uniform。
 struct Uniforms {
   // 画布宽高、图像宽高比与填充位。
   canvasMetrics: vec4f,
@@ -24,6 +27,7 @@ struct Uniforms {
 @group(1) @binding(1) var secondaryTexture: texture_2d<f32>;
 @group(1) @binding(2) var linearSampler: sampler;
 
+/// 场景顶点阶段到片元阶段的插值输出。
 struct VertexOutput {
   // 顶点裁剪空间位置。
   @builtin(position) clipPosition: vec4f,

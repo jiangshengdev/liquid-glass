@@ -1,3 +1,6 @@
+//! 覆盖层折射阶段的数据结构。
+
+/// 覆盖层折射计算的完整输出。
 struct OverlayRefraction {
   // 表面法线。
   surfaceNormal: vec2f,
@@ -9,6 +12,7 @@ struct OverlayRefraction {
   refractedColor: vec3f,
 }
 
+/// 折射采样阶段的中间结果。
 struct OverlayRefractionSample {
   // 到边缘的内部距离。
   distanceInside: f32,

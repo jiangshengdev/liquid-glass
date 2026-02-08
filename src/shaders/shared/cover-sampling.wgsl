@@ -1,3 +1,14 @@
+//! 背景图 cover 采样工具。
+
+/// 将归一化纹理坐标映射到 cover 模式采样坐标。
+///
+/// # 参数
+/// - `textureCoordinates`: 原始纹理坐标。
+/// - `containerAspect`: 容器宽高比。
+/// - `imageAspect`: 图像宽高比。
+///
+/// # 返回
+/// - cover 模式下的纹理采样坐标。
 fn compute_cover_texture_coordinates(
   textureCoordinates: vec2f,
   containerAspect: f32,
@@ -24,6 +35,13 @@ fn compute_cover_texture_coordinates(
   return clamp(resultCoordinates, vec2f(0.0), vec2f(1.0));
 }
 
+/// 从主纹理采样 cover 后的颜色。
+///
+/// # 参数
+/// - `textureCoordinates`: 屏幕空间对应的纹理坐标。
+///
+/// # 返回
+/// - 采样得到的 RGB 颜色。
 fn sample_cover_color(textureCoordinates: vec2f) -> vec3f {
   // 读取画布尺寸。
   let canvasSize = sceneUniforms.canvasMetrics.xy;

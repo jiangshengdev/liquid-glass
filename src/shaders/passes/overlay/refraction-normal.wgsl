@@ -1,3 +1,12 @@
+//! 覆盖层折射法线计算。
+
+/// 通过 SDF 数值梯度估计覆盖层表面法线。
+///
+/// # 参数
+/// - `geometry`: 覆盖层几何上下文。
+///
+/// # 返回
+/// - 归一化后的表面法线。
 fn compute_overlay_surface_normal(geometry: OverlayGeometry) -> vec2f {
   // 静态折射（无噪声）：规则的透镜场。
   // 目标：中心基本不变，边缘沿 SDF 法线有序弯折。

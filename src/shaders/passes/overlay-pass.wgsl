@@ -1,3 +1,12 @@
+//! 覆盖层通道入口：折射 + 边缘光照 + alpha 合成。
+
+/// 覆盖层片元着色器入口。
+///
+/// # 参数
+/// - `vertexOutput`: 顶点阶段插值输出。
+///
+/// # 返回
+/// - 折射与高光合成后的预乘 alpha 颜色。
 @fragment
 fn fragment_overlay(vertexOutput: VertexOutput) -> @location(0) vec4f {
   let geometry = compute_overlay_geometry(vertexOutput);

@@ -1,3 +1,6 @@
+//! 覆盖层几何信息计算。
+
+/// 覆盖层片元几何上下文。
 struct OverlayGeometry {
   // 画布尺寸。
   canvasSize: vec2f,
@@ -13,6 +16,13 @@ struct OverlayGeometry {
   fillFactor: f32,
 }
 
+/// 从片元输入构建覆盖层几何信息。
+///
+/// # 参数
+/// - `vertexOutput`: 顶点阶段插值输出。
+///
+/// # 返回
+/// - 当前片元的覆盖层几何上下文。
 fn compute_overlay_geometry(vertexOutput: VertexOutput) -> OverlayGeometry {
   // 读取画布尺寸。
   let canvasSize = sceneUniforms.canvasMetrics.xy;
