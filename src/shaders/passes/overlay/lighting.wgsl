@@ -30,26 +30,26 @@ fn apply_overlay_lighting(
   // 次高光强度。
   let secondaryHighlight = saturate(-normalDotLight);
   // 高光宽度：值越小，高光边越细。
-  let rimWidth = max(1.5, sceneUniforms.opticalParams.x * 0.07);
+  let rimWidth = max(1.0, sceneUniforms.opticalParams.x * 0.045);
   // 高光衰减因子。
   let rimFactor = saturate(1.0 - distanceInside / rimWidth);
-  // 内侧高光线因子。
-  let rimLineFactor =
-    saturate(1.0 - distanceInside / max(0.75, rimWidth * 0.22));
+  // 仅保留最外侧高光：四次方后进一步压缩高光宽度。
+  let rimFactorSquared = rimFactor * rimFactor;
+  let outerRimFactor = rimFactorSquared * rimFactorSquared;
 
   // 初始为折射后的颜色。
   var compositeColor = refractedColor;
   // 双高光风格：左上更强，右下更弱。
   let primaryHighlightAmount = saturate(
-    (0.10 * rimFactor + 1.00 * rimLineFactor) *
+    (1.00 * outerRimFactor) *
       primaryHighlight *
-      (lightStrength * 1.65),
+      (lightStrength * 1.25),
   );
   // 次高光混合强度。
   let secondaryHighlightAmount = saturate(
-    (0.06 * rimFactor + 0.80 * rimLineFactor) *
+    (0.80 * outerRimFactor) *
       secondaryHighlight *
-      (lightStrength * 0.95),
+      (lightStrength * 0.75),
   );
   // 混合主高光。
   compositeColor = mix(compositeColor, vec3f(1.0), primaryHighlightAmount);
