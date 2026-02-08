@@ -5,8 +5,6 @@ import coverSamplingWgsl from "./cover-sampling.wgsl?raw";
 /**
  * shared 目录下的通用 WGSL 片段。
  */
-export const sharedShaderSource = [
-  typesWgsl,
-  mathWgsl,
-  coverSamplingWgsl,
-].join("\n\n");
+export const sharedShaderSource = [typesWgsl, mathWgsl, coverSamplingWgsl].join(
+  "\n\n",
+);

@@ -103,7 +103,9 @@ async function main() {
     }
 
     const filePaths = await collectFiles(rootDir);
-    const allFiles = await Promise.all(filePaths.map((filePath) => getFileStat(filePath)));
+    const allFiles = await Promise.all(
+      filePaths.map((filePath) => getFileStat(filePath)),
+    );
 
     const topTs = topByExt(allFiles, ".ts", 10);
     const topWgsl = topByExt(allFiles, ".wgsl", 5);
