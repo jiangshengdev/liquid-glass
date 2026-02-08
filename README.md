@@ -57,10 +57,10 @@ npm run test:watch
 - 渲染层：`/Users/jiangsheng/GitHub/liquid-glass/src/gpu/`
   - `renderer.ts`（编排）
   - `pipelines.ts`（pipeline/layout）
-  - `offscreenTargets.ts`（离屏纹理生命周期）
-  - `renderPasses.ts`（pass 编码）
+  - `offscreen-targets.ts`（离屏纹理生命周期）
+  - `render-passes.ts`（pass 编码）
   - `uniforms.ts`（uniform 打包）
 - 交互层：`/Users/jiangsheng/GitHub/liquid-glass/src/interaction/`
   - `pointer.ts`（事件绑定）
-  - `hitTest.ts`（纯命中逻辑）
+  - `hit-test.ts`（纯命中逻辑）
 - 单元测试：`/Users/jiangsheng/GitHub/liquid-glass/tests/`

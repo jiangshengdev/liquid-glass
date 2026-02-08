@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { cursorForHit, hitTestGlass } from "../src/interaction/hitTest";
+import { cursorForHit, hitTestGlass } from "../src/interaction/hit-test";
 import type { GlassRect } from "../src/types/common";
 
-describe("interaction/hitTest", () => {
+describe("interaction/hit-test", () => {
   const glass: GlassRect = {
     left: 100,
     top: 100,

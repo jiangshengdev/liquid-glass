@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { createGlassState } from "../src/state/glassState";
+import { createGlassState } from "../src/state/glass-state";
 
-describe("state/glassState", () => {
+describe("state/glass-state", () => {
   it("enforces min size and canvas bounds in clampGlass", () => {
     const state = createGlassState({ minWidth: 240, minHeight: 96 });
     state.updateCanvasState({

@@ -1,4 +1,4 @@
-import type { OffscreenTargets } from "./offscreenTargets";
+import type { OffscreenTargets } from "./offscreen-targets";
 import type { RendererPipelines } from "./pipelines";
 
 interface EncodePassOptions {

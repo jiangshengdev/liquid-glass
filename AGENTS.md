@@ -3,7 +3,7 @@
 ## 项目结构与模块组织
 - `src/` 为核心代码目录：`src/webgpu-main.ts` 负责主流程编排，`src/app/` 管理启动与运行时，`src/gpu/` 负责渲染管线与 Pass，`src/interaction/` 处理拖拽与命中逻辑。
 - `src/config/params.ts` 存放玻璃/折射参数，`src/shaders.wgsl` 存放 WGSL Shader。
-- `tests/` 按功能放置 Vitest 单测（如 `tests/interaction-hitTest.test.ts`）。
+- `tests/` 按功能放置 Vitest 单测（如 `tests/interaction-hit-test.test.ts`）。
 - `public/` 放静态资源，`docs/plans/` 放实现与重构计划文档。
 
 ## 构建、测试与开发命令
@@ -17,7 +17,7 @@
 ## 代码风格与命名规范
 - 技术栈为 TypeScript + WGSL，使用 Prettier（`.prettierrc`）与 ESLint（`eslint.config.ts`）。
 - 统一使用 2 空格缩进；模块职责保持单一，避免“大而全”文件。
-- 命名约定：变量/函数用 `camelCase`，类型/接口用 `PascalCase`，文件名采用语义化小驼峰（如 `renderPasses.ts`、`glassState.ts`）。
+- 命名约定：变量/函数用 `camelCase`，类型/接口用 `PascalCase`，文件名采用语义化kebab-case（如 `render-passes.ts`、`glass-state.ts`）。
 - 重命名 Shader 入口函数时，同步更新 TS 侧 pipeline 引用。
 
 ## 测试规范

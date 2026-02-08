@@ -1,5 +1,5 @@
 import type { PointerHandlersDeps } from "../types/interaction";
-import { cursorForHit, hitTestGlass } from "./hitTest";
+import { cursorForHit, hitTestGlass } from "./hit-test";
 
 function pointerPositionCss(
   canvas: HTMLCanvasElement,

@@ -3,7 +3,7 @@ import { createRuntime } from "./app/runtime";
 import { MIN_HEIGHT, MIN_WIDTH, PARAMS, RESIZE_MARGIN } from "./config/params";
 import { createRenderer } from "./gpu/renderer";
 import { attachPointerHandlers } from "./interaction/pointer";
-import { createGlassState } from "./state/glassState";
+import { createGlassState } from "./state/glass-state";
 import { showFallback } from "./utils/dom";
 import { devicePixelRatioClamped } from "./utils/math";
 
