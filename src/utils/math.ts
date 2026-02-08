@@ -6,6 +6,7 @@
  * @returns 被夹取后的值。
  */
 export function clamp(value: number, min: number, max: number): number {
+  // 先限制到上界，再限制到下界，保证落入区间。
   return Math.max(min, Math.min(max, value));
 }
 
@@ -14,6 +15,7 @@ export function clamp(value: number, min: number, max: number): number {
  * @returns 范围在 `[1, 2]` 的 DPR。
  */
 export function devicePixelRatioClamped(): number {
+  // DPR 过高会放大像素成本，这里统一夹取。
   return clamp(window.devicePixelRatio || 1, 1, 2);
 }
 
@@ -33,11 +35,16 @@ export function sdRoundRect(
   halfHeight: number,
   radius: number,
 ): number {
+  // 计算点到圆角矩形角部的水平距离。
   const horizontalDistanceFromCorner =
     Math.abs(pointLeft) - (halfWidth - radius);
+  // 计算点到圆角矩形角部的垂直距离。
   const verticalDistanceFromCorner = Math.abs(pointTop) - (halfHeight - radius);
+  // 角外区域的水平超出量。
   const horizontalDistanceOutside = Math.max(horizontalDistanceFromCorner, 0);
+  // 角外区域的垂直超出量。
   const verticalDistanceOutside = Math.max(verticalDistanceFromCorner, 0);
+  // 合成外部距离与内部补偿，得到最终 SDF。
   return (
     Math.hypot(horizontalDistanceOutside, verticalDistanceOutside) +
     Math.min(
