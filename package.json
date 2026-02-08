@@ -10,6 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
+    "stats:files": "node scripts/file-size-report.mjs",
     "format": "prettier . --write",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
