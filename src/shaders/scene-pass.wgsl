@@ -1,0 +1,11 @@
+@fragment
+fn fragment_scene(vertexOutput: VertexOutput) -> @location(0) vec4f {
+  // 对齐 DOM/Canvas 坐标系：y 轴向下增长。
+  // 翻转纹理坐标的 y 轴。
+  let textureCoordinates = vec2f(
+    vertexOutput.textureCoordinates.x,
+    1.0 - vertexOutput.textureCoordinates.y,
+  );
+  // 输出原图颜色。
+  return vec4f(sample_cover_color(textureCoordinates), 1.0);
+}

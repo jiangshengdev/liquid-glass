@@ -1,4 +1,4 @@
-import wgsl from "../shaders.wgsl?raw";
+import { shaderSource } from "../shaders";
 import { showFallback } from "../utils/dom";
 import { createImageTexture, loadBitmap } from "../utils/image";
 
@@ -161,7 +161,7 @@ export async function bootstrapWebGpuApp(): Promise<BootstrapResult | null> {
   const imageTexture = createImageTexture(device, queue, bitmap);
 
   // 创建 WGSL Shader 模块。
-  const shaderModule = device.createShaderModule({ code: wgsl });
+  const shaderModule = device.createShaderModule({ code: shaderSource });
   if (typeof shaderModule.getCompilationInfo === "function") {
     try {
       // 读取编译信息并输出。
