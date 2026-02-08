@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import process from "node:process";
 
 const DEFAULT_ROOT = "/Users/jiangsheng/GitHub/liquid-glass/src";
 const rootDir = path.resolve(process.argv[2] ?? DEFAULT_ROOT);
