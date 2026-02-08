@@ -35,6 +35,7 @@ export function createRenderer({
     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
   });
 
+  // 创建并缓存渲染管线与 bind group。
   const pipelines = createPipelines({
     device,
     module,
@@ -45,6 +46,7 @@ export function createRenderer({
   });
 
   let targets: OffscreenTargets | null = null;
+  // 标记场景离屏结果是否过期。
   let sceneDirty = true;
 
   // 6 个 vec4 对应 24 个 float。
@@ -55,6 +57,7 @@ export function createRenderer({
    * @returns 无返回值。
    */
   function recreateOffscreenTargets(): void {
+    // 按最新画布尺寸重建离屏纹理。
     targets = createOffscreenTargets({
       device,
       imageBindGroupLayout: pipelines.imageBindGroupLayout,
@@ -63,6 +66,7 @@ export function createRenderer({
       height: state.canvas.pixelHeight,
       previous: targets,
     });
+    // 重建后需重新渲染场景。
     sceneDirty = true;
   }
 
@@ -71,9 +75,12 @@ export function createRenderer({
    * @returns 画布尺寸或 DPR 是否发生变化。
    */
   function ensureCanvasConfigured(): boolean {
+    // 获取当前设备像素比。
     const devicePixelRatio = devicePixelRatioClamped();
+    // 读取 CSS 尺寸。
     const cssWidth = canvas.clientWidth;
     const cssHeight = canvas.clientHeight;
+    // 计算像素尺寸。
     const pixelWidth = Math.max(1, Math.floor(cssWidth * devicePixelRatio));
     const pixelHeight = Math.max(1, Math.floor(cssHeight * devicePixelRatio));
 
@@ -86,13 +93,16 @@ export function createRenderer({
     });
 
     if (changed) {
+      // 更新画布像素尺寸。
       canvas.width = pixelWidth;
       canvas.height = pixelHeight;
+      // 重新配置画布上下文。
       canvasContext.configure({
         device,
         format: presentationFormat,
         alphaMode: "premultiplied",
       });
+      // 输出本次配置信息。
       log("canvasContext.configure =", {
         width: pixelWidth,
         height: pixelHeight,
@@ -101,6 +111,7 @@ export function createRenderer({
       });
     }
 
+    // 同步玻璃 UI 的可见与位置。
     updateGlassUi(!isGlassUiHidden());
 
     if (changed || !targets) recreateOffscreenTargets();
@@ -112,6 +123,7 @@ export function createRenderer({
    * @returns 无返回值。
    */
   function writeUniforms(): void {
+    // 将状态与参数打包到 uniform 数组。
     packUniforms(
       {
         canvasWidth: state.canvas.pixelWidth,
@@ -126,6 +138,7 @@ export function createRenderer({
       },
       uniformFloat32Data,
     );
+    // 写入 GPU uniform 缓冲区。
     queue.writeBuffer(uniformBuffer, 0, uniformFloat32Data);
   }
 
@@ -137,6 +150,7 @@ export function createRenderer({
     // 保护：Safari 某些版本在 resize 瞬间可能给出 0 尺寸 drawable。
     if (canvas.width <= 1 || canvas.height <= 1 || !targets) return;
 
+    // 创建命令编码器。
     const encoder = device.createCommandEncoder();
 
     // 仅在场景脏时重算离屏场景与高斯模糊。
@@ -148,6 +162,7 @@ export function createRenderer({
     // 最终通道：先绘制场景，再叠加玻璃层。
     encodeFinalPass({ encoder, canvasContext, targets, pipelines });
 
+    // 提交命令到 GPU 队列。
     queue.submit([encoder.finish()]);
   }
 
@@ -156,6 +171,7 @@ export function createRenderer({
     writeUniforms,
     render,
     setSceneDirty(value: boolean) {
+      // 外部标记场景是否脏。
       sceneDirty = !!value;
     },
   };

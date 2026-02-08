@@ -1,18 +1,28 @@
+/* 根级配色设置 */
 :root {
+  /* 使用暗色配色方案 */
   color-scheme: dark;
 }
 
+/* 充满视口的基础元素 */
 html,
 body,
 #app {
+  /* 宽度占满 */
   width: 100%;
+  /* 高度占满 */
   height: 100%;
 }
 
+/* 页面基础样式 */
 body {
+  /* 去除默认外边距 */
   margin: 0;
+  /* 深色背景 */
   background: #0b0b0f;
+  /* 文字颜色 */
   color: rgba(255, 255, 255, 0.92);
+  /* 默认字体设置 */
   font:
     14px/1.35 ui-sans-serif,
     system-ui,
@@ -23,114 +33,192 @@ body {
     Arial;
 }
 
+/* 应用容器全屏固定 */
 #app {
+  /* 固定定位覆盖视口 */
   position: fixed;
+  /* 贴边占满 */
   inset: 0;
+  /* 隐藏溢出 */
   overflow: hidden;
 }
 
+/* WebGPU 画布样式 */
 canvas {
+  /* 绝对定位覆盖父容器 */
   position: absolute;
+  /* 贴边占满 */
   inset: 0;
+  /* 宽度占满 */
   width: 100%;
+  /* 高度占满 */
   height: 100%;
+  /* 防止出现空白缝隙 */
   display: block;
+  /* 禁用触摸默认行为 */
   touch-action: none;
 }
 
+/* 玻璃 UI 容器 */
 .glass-ui {
+  /* 拖拽把手尺寸变量 */
   --handle: 10px;
+  /* 绝对定位 */
   position: absolute;
+  /* 提升层级 */
   z-index: 5;
+  /* 禁止鼠标事件穿透 */
   pointer-events: none;
+  /* 细边框 */
   border: 1px solid rgba(255, 255, 255, 0.72);
+  /* 不使用圆角 */
   border-radius: 0;
+  /* 外描边阴影 */
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.28);
 }
 
+/* 玻璃拖拽把手 */
 .glass-handle {
+  /* 绝对定位 */
   position: absolute;
+  /* 宽度使用变量 */
   width: var(--handle);
+  /* 高度使用变量 */
   height: var(--handle);
+  /* 白色背景 */
   background: rgba(255, 255, 255, 0.92);
+  /* 细边框 */
   border: 1px solid rgba(0, 0, 0, 0.35);
+  /* 小圆角 */
   border-radius: 3px;
+  /* 轻微阴影 */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
+/* 左上把手位置 */
 .glass-handle.top-left {
+  /* 左侧对齐 */
   left: 0;
+  /* 顶部对齐 */
   top: 0;
+  /* 居中偏移 */
   transform: translate(-50%, -50%);
 }
 
+/* 上中把手位置 */
 .glass-handle.top-middle {
+  /* 水平居中 */
   left: 50%;
+  /* 顶部对齐 */
   top: 0;
+  /* 居中偏移 */
   transform: translate(-50%, -50%);
 }
 
+/* 右上把手位置 */
 .glass-handle.top-right {
+  /* 右侧对齐 */
   right: 0;
+  /* 顶部对齐 */
   top: 0;
+  /* 居中偏移 */
   transform: translate(50%, -50%);
 }
 
+/* 左中把手位置 */
 .glass-handle.middle-left {
+  /* 左侧对齐 */
   left: 0;
+  /* 垂直居中 */
   top: 50%;
+  /* 居中偏移 */
   transform: translate(-50%, -50%);
 }
 
+/* 右中把手位置 */
 .glass-handle.middle-right {
+  /* 右侧对齐 */
   right: 0;
+  /* 垂直居中 */
   top: 50%;
+  /* 居中偏移 */
   transform: translate(50%, -50%);
 }
 
+/* 左下把手位置 */
 .glass-handle.bottom-left {
+  /* 左侧对齐 */
   left: 0;
+  /* 底部对齐 */
   bottom: 0;
+  /* 居中偏移 */
   transform: translate(-50%, 50%);
 }
 
+/* 下中把手位置 */
 .glass-handle.bottom-middle {
+  /* 水平居中 */
   left: 50%;
+  /* 底部对齐 */
   bottom: 0;
+  /* 居中偏移 */
   transform: translate(-50%, 50%);
 }
 
+/* 右下把手位置 */
 .glass-handle.bottom-right {
+  /* 右侧对齐 */
   right: 0;
+  /* 底部对齐 */
   bottom: 0;
+  /* 居中偏移 */
   transform: translate(50%, 50%);
 }
 
+/* 隐藏属性统一处理 */
 [hidden] {
+  /* 强制隐藏 */
   display: none !important;
 }
 
+/* 回退层容器 */
 .fallback {
+  /* 绝对定位覆盖视口 */
   position: absolute;
+  /* 贴边占满 */
   inset: 0;
+  /* 使用网格居中 */
   display: grid;
+  /* 子元素居中 */
   place-items: center;
+  /* 留出内边距 */
   padding: 24px;
 }
 
+/* 回退卡片样式 */
 .fallback-card {
+  /* 最大宽度限制 */
   max-width: 720px;
+  /* 半透明背景 */
   background: rgba(20, 22, 28, 0.82);
+  /* 细边框 */
   border: 1px solid rgba(255, 255, 255, 0.14);
+  /* 圆角 */
   border-radius: 16px;
+  /* 内边距 */
   padding: 16px 18px;
 }
 
+/* 回退标题 */
 .fallback-title {
+  /* 字重略高 */
   font-weight: 650;
+  /* 下边距 */
   margin-bottom: 8px;
 }
 
+/* 回退正文 */
 .fallback-text {
+  /* 文字颜色偏淡 */
   color: rgba(255, 255, 255, 0.68);
 }

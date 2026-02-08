@@ -21,7 +21,9 @@ function errorMessage(err: unknown): string {
  * @returns 无返回值，失败时通过回退 UI 呈现错误。
  */
 async function main(): Promise<void> {
+  // 执行启动流程。
   const bootstrapResult = await bootstrapWebGpuApp();
+  // 启动失败时直接结束。
   if (!bootstrapResult) return;
 
   const {
@@ -43,6 +45,7 @@ async function main(): Promise<void> {
   device.pushErrorScope("validation");
   device.pushErrorScope("out-of-memory");
 
+  // 创建玻璃状态并设置最小尺寸。
   const state = createGlassState({
     minWidth: MIN_WIDTH,
     minHeight: MIN_HEIGHT,
@@ -50,16 +53,21 @@ async function main(): Promise<void> {
 
   // 将状态层中的玻璃矩形同步到 DOM 辅助框。
   const updateGlassUi = (visible?: boolean): void => {
+    // 无 UI 元素时直接返回。
     if (!glassUi) return;
+    // 可见性显式传入时更新 hidden。
     if (typeof visible === "boolean") glassUi.hidden = !visible;
+    // 隐藏状态无需继续更新位置。
     if (glassUi.hidden) return;
 
+    // 同步位置与尺寸。
     glassUi.style.left = `${state.glass.left}px`;
     glassUi.style.top = `${state.glass.top}px`;
     glassUi.style.width = `${state.glass.width}px`;
     glassUi.style.height = `${state.glass.height}px`;
   };
 
+  // 创建渲染器。
   const renderer = createRenderer({
     device,
     queue,
@@ -80,24 +88,32 @@ async function main(): Promise<void> {
 
   // 管线初始化完成后，按压栈顺序弹出错误作用域。
   {
+    // 弹出 OOM 错误。
     const oomError = await device.popErrorScope();
+    // 弹出校验错误。
     const validationError = await device.popErrorScope();
 
+    // 输出 OOM 错误。
     if (oomError) console.error("[webgpu] OOM error:", oomError);
+    // 输出校验错误。
     if (validationError)
       console.error("[webgpu] Validation error:", validationError);
 
     if (oomError || validationError) {
+      // 组合错误消息。
       const validationFailureMessage =
         (validationError ?? oomError)?.message ??
         String(validationError ?? oomError);
+      // 触发回退提示。
       showFallback(`GPU 校验失败：${validationFailureMessage}`);
       return;
     }
   }
 
+  // 创建运行时调度器。
   const runtime = createRuntime({ device, renderer });
 
+  // 绑定指针交互。
   const disposePointerHandlers = attachPointerHandlers({
     canvas,
     state,
@@ -107,8 +123,10 @@ async function main(): Promise<void> {
     updateGlassUi,
     stoppedRef: runtime.stoppedRef,
   });
+  // 注册清理函数。
   runtime.addCleanup(disposePointerHandlers);
 
+  // 触发首帧渲染。
   runtime.requestRender();
 }
 
