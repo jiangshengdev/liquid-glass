@@ -55,4 +55,13 @@ describe("debug/refraction-mapping", () => {
     expect(sampled.source.x).toBeCloseTo(strongestArrow.source.x, 6);
     expect(sampled.source.y).toBeCloseTo(strongestArrow.source.y, 6);
   });
+
+  it("samples multiple inset layers across the refraction band", () => {
+    const arrows = buildRefractionArrows(glass, params, 14);
+    const layerKeys = new Set(
+      arrows.map((arrow) => arrow.distanceInside.toFixed(2)),
+    );
+
+    expect(layerKeys.size).toBeGreaterThan(2);
+  });
 });

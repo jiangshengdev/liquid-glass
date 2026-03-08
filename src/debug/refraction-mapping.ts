@@ -64,6 +64,10 @@ function normalize(value: Vec2): Vec2 {
   return scale(value, 1 / valueLength);
 }
 
+function positiveModulo(value: number, divisor: number): number {
+  return ((value % divisor) + divisor) % divisor;
+}
+
 function overlayCenter(glass: GlassRect): Vec2 {
   return {
     x: glass.left + glass.width * 0.5,
@@ -169,7 +173,58 @@ export function sampleRefractionAtDestination(
 }
 
 /**
- * 直接按最终显示位置采样箭头。
+ * 根据沿边界的弧长偏移，返回胶囊边界上的一个采样点。
+ * @param offset 沿边界前进的距离。
+ * @param center 胶囊中心点。
+ * @param coreHalfWidth 中央直线段的半长。
+ * @param insetRadius 当前内缩层的圆角半径。
+ * @returns 边界上的画布坐标。
+ */
+function pointOnInsetCapsuleBoundary(
+  offset: number,
+  center: Vec2,
+  coreHalfWidth: number,
+  insetRadius: number,
+): Vec2 {
+  const straightLength = coreHalfWidth * 2;
+  const arcLength = Math.PI * insetRadius;
+  const perimeter = straightLength * 2 + arcLength * 2;
+  const wrappedOffset = positiveModulo(offset, perimeter);
+
+  if (wrappedOffset < straightLength) {
+    return {
+      x: center.x - coreHalfWidth + wrappedOffset,
+      y: center.y - insetRadius,
+    };
+  }
+
+  if (wrappedOffset < straightLength + arcLength) {
+    const arcOffset = wrappedOffset - straightLength;
+    const angle = -Math.PI * 0.5 + arcOffset / insetRadius;
+    return {
+      x: center.x + coreHalfWidth + Math.cos(angle) * insetRadius,
+      y: center.y + Math.sin(angle) * insetRadius,
+    };
+  }
+
+  if (wrappedOffset < straightLength * 2 + arcLength) {
+    const edgeOffset = wrappedOffset - (straightLength + arcLength);
+    return {
+      x: center.x + coreHalfWidth - edgeOffset,
+      y: center.y + insetRadius,
+    };
+  }
+
+  const arcOffset = wrappedOffset - (straightLength * 2 + arcLength);
+  const angle = Math.PI * 0.5 + arcOffset / insetRadius;
+  return {
+    x: center.x - coreHalfWidth + Math.cos(angle) * insetRadius,
+    y: center.y + Math.sin(angle) * insetRadius,
+  };
+}
+
+/**
+ * 直接按边界带分层采样箭头。
  * 箭头含义：原始像素位置 -> 经过折射后显示到的位置。
  */
 export function buildRefractionArrows(
@@ -178,14 +233,38 @@ export function buildRefractionArrows(
   spacing = 20,
 ): RefractionArrow[] {
   const arrows: RefractionArrow[] = [];
-  const minX = glass.left;
-  const maxX = glass.left + glass.width;
-  const minY = glass.top;
-  const maxY = glass.top + glass.height;
+  const center = overlayCenter(glass);
+  const halfSize = overlayHalfSize(glass);
+  const radius = glass.height * 0.5;
+  const coreHalfWidth = Math.max(0, halfSize.x - radius);
+  const maxDistanceInside = Math.min(radius - EPSILON, radius * params.depth);
+  const radialSpacing = Math.max(4, spacing * 0.45);
 
-  for (let y = minY; y <= maxY; y += spacing) {
-    for (let x = minX; x <= maxX; x += spacing) {
-      const destination = { x, y };
+  if (maxDistanceInside <= EPSILON) return arrows;
+
+  for (
+    let layerIndex = 0, distanceInside = radialSpacing * 0.5;
+    distanceInside <= maxDistanceInside;
+    layerIndex += 1, distanceInside += radialSpacing
+  ) {
+    const insetRadius = radius - distanceInside;
+    if (insetRadius <= EPSILON) continue;
+
+    const straightLength = coreHalfWidth * 2;
+    const perimeter = straightLength * 2 + Math.PI * insetRadius * 2;
+    const layerOffset = spacing * (0.25 + (layerIndex % 2) * 0.5);
+
+    for (
+      let perimeterOffset = layerOffset;
+      perimeterOffset < perimeter;
+      perimeterOffset += spacing
+    ) {
+      const destination = pointOnInsetCapsuleBoundary(
+        perimeterOffset,
+        center,
+        coreHalfWidth,
+        insetRadius,
+      );
       const sample = sampleRefractionAtDestination(destination, glass, params);
       if (!sample.inside) continue;
 
