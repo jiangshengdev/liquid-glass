@@ -6,10 +6,14 @@ export interface RendererPipelines {
   uniformBindGroupLayout: GPUBindGroupLayout;
   /** 图像 bind group 布局。 */
   imageBindGroupLayout: GPUBindGroupLayout;
+  /** 折射箭头实例 bind group 布局。 */
+  refractionDebugBindGroupLayout: GPUBindGroupLayout;
   /** uniform bind group。 */
   uniformBindGroup: GPUBindGroup;
   /** 图像 bind group。 */
   imageBindGroup: GPUBindGroup;
+  /** 折射箭头实例 bind group。 */
+  refractionDebugBindGroup: GPUBindGroup;
   /** 场景渲染管线。 */
   scenePipeline: GPURenderPipeline;
   /** 横向模糊管线。 */
@@ -20,6 +24,8 @@ export interface RendererPipelines {
   presentPipeline: GPURenderPipeline;
   /** 叠加管线。 */
   overlayPipeline: GPURenderPipeline;
+  /** 折射箭头调试管线。 */
+  refractionDebugPipeline: GPURenderPipeline;
 }
 
 interface CreatePipelinesOptions {
@@ -31,6 +37,8 @@ interface CreatePipelinesOptions {
   presentationFormat: GPUTextureFormat;
   /** uniform 缓冲区。 */
   uniformBuffer: GPUBuffer;
+  /** 折射箭头实例缓冲区。 */
+  refractionDebugBuffer: GPUBuffer;
   /** 图像纹理。 */
   imageTexture: GPUTexture;
   /** 采样器。 */
@@ -47,6 +55,7 @@ export function createPipelines({
   module,
   presentationFormat,
   uniformBuffer,
+  refractionDebugBuffer,
   imageTexture,
   sampler,
 }: CreatePipelinesOptions): RendererPipelines {
@@ -82,6 +91,17 @@ export function createPipelines({
     ],
   });
 
+  // 调试箭头：顶点阶段从 storage buffer 按实例读取源点与目标点。
+  const refractionDebugBindGroupLayout = device.createBindGroupLayout({
+    entries: [
+      {
+        binding: 0,
+        visibility: GPUShaderStage.VERTEX,
+        buffer: { type: "read-only-storage" },
+      },
+    ],
+  });
+
   // 创建 uniform bind group。
   const uniformBindGroup = device.createBindGroup({
     layout: uniformBindGroupLayout,
@@ -101,9 +121,20 @@ export function createPipelines({
     ],
   });
 
+  // 创建折射箭头实例 bind group。
+  const refractionDebugBindGroup = device.createBindGroup({
+    layout: refractionDebugBindGroupLayout,
+    entries: [{ binding: 0, resource: { buffer: refractionDebugBuffer } }],
+  });
+
   // 合并 uniform 与图像布局。
   const pipelineLayout = device.createPipelineLayout({
     bindGroupLayouts: [uniformBindGroupLayout, imageBindGroupLayout],
+  });
+
+  // 单独的箭头调试布局：uniform + 实例化 storage buffer。
+  const refractionDebugPipelineLayout = device.createPipelineLayout({
+    bindGroupLayouts: [uniformBindGroupLayout, refractionDebugBindGroupLayout],
   });
 
   // 通道 1：将原图覆盖映射到离屏场景纹理。
@@ -182,15 +213,46 @@ export function createPipelines({
     primitive: { topology: "triangle-list" },
   });
 
+  // 调试通道：以实例化方式叠加折射位移箭头。
+  const refractionDebugPipeline = device.createRenderPipeline({
+    layout: refractionDebugPipelineLayout,
+    vertex: { module, entryPoint: "vertex_refraction_debug" },
+    fragment: {
+      module,
+      entryPoint: "fragment_refraction_debug",
+      targets: [
+        {
+          format: presentationFormat,
+          blend: {
+            color: {
+              srcFactor: "src-alpha",
+              dstFactor: "one-minus-src-alpha",
+              operation: "add",
+            },
+            alpha: {
+              srcFactor: "one",
+              dstFactor: "one-minus-src-alpha",
+              operation: "add",
+            },
+          },
+        },
+      ],
+    },
+    primitive: { topology: "triangle-list" },
+  });
+
   return {
     uniformBindGroupLayout,
     imageBindGroupLayout,
+    refractionDebugBindGroupLayout,
     uniformBindGroup,
     imageBindGroup,
+    refractionDebugBindGroup,
     scenePipeline,
     blurHorizontalPipeline,
     blurVerticalPipeline,
     presentPipeline,
     overlayPipeline,
+    refractionDebugPipeline,
   };
 }

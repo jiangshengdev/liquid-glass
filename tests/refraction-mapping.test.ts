@@ -1,0 +1,58 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  buildRefractionArrows,
+  sampleRefractionAtDestination,
+} from "../src/debug/refraction-mapping";
+import type { GlassParams, GlassRect } from "../src/types/common";
+
+const glass: GlassRect = {
+  left: 100,
+  top: 100,
+  width: 360,
+  height: 120,
+};
+
+const params: GlassParams = {
+  refraction: 56,
+  depth: 0.35,
+  dispersion: 0,
+  frost: 4,
+  splay: 0,
+  lightAngleDeg: -45,
+  lightStrength: 0.8,
+  alpha: 1,
+};
+
+describe("debug/refraction-mapping", () => {
+  it("keeps center point unmoved", () => {
+    const center = {
+      x: glass.left + glass.width * 0.5,
+      y: glass.top + glass.height * 0.5,
+    };
+
+    const sample = sampleRefractionAtDestination(center, glass, params);
+
+    expect(sample.inside).toBe(true);
+    expect(sample.offset.x).toBeCloseTo(0, 6);
+    expect(sample.offset.y).toBeCloseTo(0, 6);
+  });
+
+  it("builds arrows directly from displayed positions in the edge band", () => {
+    const arrows = buildRefractionArrows(glass, params, 12);
+
+    expect(arrows.length).toBeGreaterThan(50);
+
+    const strongestArrow = arrows.reduce((best, arrow) =>
+      arrow.displacement > best.displacement ? arrow : best,
+    );
+    const sampled = sampleRefractionAtDestination(
+      strongestArrow.destination,
+      glass,
+      params,
+    );
+
+    expect(sampled.source.x).toBeCloseTo(strongestArrow.source.x, 6);
+    expect(sampled.source.y).toBeCloseTo(strongestArrow.source.y, 6);
+  });
+});

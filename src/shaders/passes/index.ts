@@ -3,6 +3,7 @@ import scenePassWgsl from "./scene-pass.wgsl?raw";
 import presentPassWgsl from "./present-pass.wgsl?raw";
 import blurPassWgsl from "./blur-pass.wgsl?raw";
 import overlayPassWgsl from "./overlay-pass.wgsl?raw";
+import refractionDebugPassWgsl from "./refraction-debug-pass.wgsl?raw";
 import { overlayShaderSource } from "./overlay";
 
 /**
@@ -15,4 +16,5 @@ export const passesShaderSource = [
   blurPassWgsl,
   overlayShaderSource,
   overlayPassWgsl,
+  refractionDebugPassWgsl,
 ].join("\n\n");

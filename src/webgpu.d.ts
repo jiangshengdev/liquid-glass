@@ -10,6 +10,8 @@ declare const GPUBufferUsage: {
   readonly UNIFORM: number;
   /** 复制目标用途。 */
   readonly COPY_DST: number;
+  /** 存储缓冲用途。 */
+  readonly STORAGE: number;
 };
 
 /** Shader 阶段标记。 */
@@ -68,8 +70,11 @@ interface GPUUncapturedErrorEvent extends Event {
 type GPUSampler = { readonly __brand: "GPUSampler" };
 /** 纹理视图品牌类型。 */
 type GPUTextureView = { readonly __brand: "GPUTextureView" };
-/** 缓冲区品牌类型。 */
-type GPUBuffer = { readonly __brand: "GPUBuffer" };
+/** GPU 缓冲区对象。 */
+interface GPUBuffer {
+  /** 销毁缓冲区。 */
+  destroy(): void;
+}
 /** BindGroupLayout 品牌类型。 */
 type GPUBindGroupLayout = { readonly __brand: "GPUBindGroupLayout" };
 /** BindGroup 品牌类型。 */
@@ -128,7 +133,7 @@ interface GPURenderPassEncoder {
   /** 绑定渲染管线。 */
   setPipeline(pipeline: GPURenderPipeline): void;
   /** 发起绘制调用。 */
-  draw(vertexCount: number): void;
+  draw(vertexCount: number, instanceCount?: number): void;
   /** 结束通道。 */
   end(): void;
 }

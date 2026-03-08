@@ -22,7 +22,6 @@ export function encodeScenePasses({
 }: EncodePassOptions): void {
   // 通道 1：将覆盖映射后的原图写入 sceneTexture。
   {
-    // 创建场景渲染通道。
     const scenePass = encoder.beginRenderPass({
       colorAttachments: [
         {
@@ -48,7 +47,6 @@ export function encodeScenePasses({
 
   // 通道 2：执行横向模糊，输出到 horizontalBlurTexture。
   {
-    // 创建横向模糊通道。
     const blurHorizontalPass = encoder.beginRenderPass({
       colorAttachments: [
         {
@@ -74,7 +72,6 @@ export function encodeScenePasses({
 
   // 通道 3：执行纵向模糊，输出到 verticalBlurTexture。
   {
-    // 创建纵向模糊通道。
     const blurVerticalPass = encoder.beginRenderPass({
       colorAttachments: [
         {
@@ -108,10 +105,12 @@ interface EncodeFinalPassOptions {
   targets: OffscreenTargets;
   /** 渲染管线集合。 */
   pipelines: RendererPipelines;
+  /** 折射箭头实例数量。 */
+  refractionArrowCount: number;
 }
 
 /**
- * 编码最终上屏通道：先绘制场景，再叠加玻璃效果。
+ * 编码最终上屏通道：先绘制场景，再叠加玻璃效果和 GPU 箭头。
  * @param options 编码参数。
  * @returns 无返回值。
  */
@@ -120,6 +119,7 @@ export function encodeFinalPass({
   canvasContext,
   targets,
   pipelines,
+  refractionArrowCount,
 }: EncodeFinalPassOptions): void {
   // 获取交换链纹理视图。
   const view = canvasContext.getCurrentTexture().createView();
@@ -148,6 +148,14 @@ export function encodeFinalPass({
   finalPass.setBindGroup(1, targets.overlayBindGroup);
   finalPass.setPipeline(pipelines.overlayPipeline);
   finalPass.draw(3);
+
+  // 最后叠加 GPU 实例化箭头调试层。
+  if (refractionArrowCount > 0) {
+    finalPass.setBindGroup(1, pipelines.refractionDebugBindGroup);
+    finalPass.setPipeline(pipelines.refractionDebugPipeline);
+    // 每个箭头实例由 9 个顶点拼出箭杆与箭头头。
+    finalPass.draw(9, refractionArrowCount);
+  }
 
   // 结束通道。
   finalPass.end();
