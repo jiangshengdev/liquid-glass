@@ -64,4 +64,23 @@ describe("debug/refraction-mapping", () => {
 
     expect(layerKeys.size).toBeGreaterThan(2);
   });
+
+  it("spreads top-edge layers across multiple horizontal phases", () => {
+    const spacing = 14;
+    const arrows = buildRefractionArrows(glass, params, spacing);
+    const radius = glass.height * 0.5;
+    const topStraightArrows = arrows.filter(
+      (arrow) =>
+        arrow.destination.y < glass.top + radius * params.depth + 1 &&
+        arrow.destination.x > glass.left + radius + 24 &&
+        arrow.destination.x < glass.left + glass.width - radius - 24,
+    );
+    const phaseKeys = new Set(
+      topStraightArrows.map((arrow) =>
+        (((arrow.destination.x - glass.left) % spacing) + spacing).toFixed(2),
+      ),
+    );
+
+    expect(phaseKeys.size).toBeGreaterThan(2);
+  });
 });

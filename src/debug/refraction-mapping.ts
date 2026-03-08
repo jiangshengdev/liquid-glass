@@ -33,6 +33,7 @@ export interface RefractionArrow {
 }
 
 const EPSILON = 1e-6;
+const GOLDEN_RATIO_CONJUGATE = 0.6180339887498949;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -252,7 +253,13 @@ export function buildRefractionArrows(
 
     const straightLength = coreHalfWidth * 2;
     const perimeter = straightLength * 2 + Math.PI * insetRadius * 2;
-    const layerOffset = spacing * (0.25 + (layerIndex % 2) * 0.5);
+    // 顶部/底部直线段的法线方向几乎一致，若层间相位重复，箭头会叠成竖线。
+    // 这里仅改变每一层沿切线方向的采样起点，不改任何箭头的真实 source/destination。
+    const layerPhase = positiveModulo(
+      0.5 + layerIndex * GOLDEN_RATIO_CONJUGATE,
+      1,
+    );
+    const layerOffset = spacing * layerPhase;
 
     for (
       let perimeterOffset = layerOffset;
