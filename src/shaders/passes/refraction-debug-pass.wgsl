@@ -60,8 +60,9 @@ fn vertex_refraction_debug(
   // 头部长固定在 [2.4, 6.0] 像素区间，同时随箭头长度增长。
   let headLength = min(6.0, max(2.4, arrowLength * 0.45));
   let shaftLength = max(0.0, arrowLength - headLength);
-  // 箭杆很细，避免遮挡玻璃内容。
-  let shaftHalfWidth = 0.475;
+  // 箭杆不能小于 1 像素量级，否则在首帧整齐对齐像素边界时容易被栅格化成断续点。
+  // 这里略微加宽，但不改变 source/destination 端点位置，仍保持 1:1 位移表达。
+  let shaftHalfWidth = 0.75;
   let headHalfWidth = headLength * 0.23;
   let templatePoint = select_refraction_debug_vertex(vertexIndex);
 
