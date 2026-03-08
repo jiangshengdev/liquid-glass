@@ -117,5 +117,6 @@ export function cursorForHit(
     if (top || bottom) return "ns-resize";
   }
   if (mode === "move") return "move";
+  if (mode === "background") return "grab";
   return "";
 }

@@ -21,7 +21,7 @@ function pointerPositionCss(
 }
 
 /**
- * 绑定画布指针事件，处理拖拽移动与缩放。
+ * 绑定画布指针事件，处理拖拽移动、缩放与背景拖动箭头偏移。
  * @param deps 交互依赖。
  * @returns 解绑函数。
  */
@@ -34,6 +34,23 @@ export function attachPointerHandlers({
   updateGlassUi,
   stoppedRef,
 }: PointerHandlersDeps): () => void {
+  const updateHoverState = (pointerLeft: number, pointerTop: number): void => {
+    const hit = hitTestGlass(
+      state.glass,
+      pointerLeft,
+      pointerTop,
+      resizeMargin,
+    );
+    if (hit.mode) {
+      canvas.style.cursor = cursorForHit(hit.mode, hit.edges) || "default";
+      updateGlassUi(true);
+      return;
+    }
+
+    canvas.style.cursor = cursorForHit("background", hit.edges) || "grab";
+    updateGlassUi(false);
+  };
+
   // 按下时：命中检测并进入拖拽状态。
   const onPointerDown = (event: PointerEvent): void => {
     if (stoppedRef.value) return;
@@ -49,21 +66,27 @@ export function attachPointerHandlers({
       pointerPosition.top,
       resizeMargin,
     );
-    if (!hit.mode) return;
+    const dragMode = hit.mode ?? "background";
 
     // 捕获指针，确保拖拽不中断。
     canvas.setPointerCapture(event.pointerId);
     state.startDrag(
-      hit.mode,
+      dragMode,
       event.pointerId,
       pointerPosition.left,
       pointerPosition.top,
       hit.edges,
     );
-    updateGlassUi(true);
-    // 根据命中结果更新光标样式。
-    canvas.style.cursor =
-      cursorForHit(hit.mode, hit.edges) || canvas.style.cursor;
+
+    if (dragMode === "background") {
+      updateGlassUi(false);
+      canvas.style.cursor = "grabbing";
+    } else {
+      updateGlassUi(true);
+      canvas.style.cursor =
+        cursorForHit(dragMode, hit.edges) || canvas.style.cursor;
+    }
+
     // 阻止默认行为以避免文本选择等。
     event.preventDefault();
     // 请求重绘。
@@ -79,25 +102,27 @@ export function attachPointerHandlers({
     ensureCanvasConfigured();
 
     if (!state.drag.active) {
-      const hit = hitTestGlass(
-        state.glass,
-        pointerPosition.left,
-        pointerPosition.top,
-        resizeMargin,
-      );
-      // 更新光标与 UI 可见状态。
-      const cursor = cursorForHit(hit.mode, hit.edges);
-      canvas.style.cursor = cursor || "default";
-      updateGlassUi(!!hit.mode);
+      updateHoverState(pointerPosition.left, pointerPosition.top);
       return;
     }
 
     // 拖拽中只处理当前指针。
     if (event.pointerId !== state.drag.pointerId) return;
-    // 根据模式应用移动或缩放。
-    if (state.drag.mode === "move")
+    // 根据模式应用移动、缩放或背景偏移。
+    if (state.drag.mode === "move") {
       state.applyMove(pointerPosition.left, pointerPosition.top);
-    else state.applyResize(pointerPosition.left, pointerPosition.top);
+      canvas.style.cursor = "move";
+      updateGlassUi(true);
+    } else if (state.drag.mode === "resize") {
+      state.applyResize(pointerPosition.left, pointerPosition.top);
+      canvas.style.cursor =
+        cursorForHit(state.drag.mode, state.drag) || canvas.style.cursor;
+      updateGlassUi(true);
+    } else {
+      state.applyBackgroundDrag(pointerPosition.left, pointerPosition.top);
+      canvas.style.cursor = "grabbing";
+      updateGlassUi(false);
+    }
 
     // 阻止默认行为并重绘。
     event.preventDefault();
@@ -114,6 +139,8 @@ export function attachPointerHandlers({
     }
     // 结束拖拽并刷新。
     state.endDrag(event.pointerId);
+    const pointerPosition = pointerPositionCss(canvas, event);
+    updateHoverState(pointerPosition.left, pointerPosition.top);
     requestRender();
   };
 
@@ -121,6 +148,7 @@ export function attachPointerHandlers({
   const onLostCapture = (event: PointerEvent): void => {
     // 捕获丢失时强制结束拖拽。
     state.endDrag(event.pointerId);
+    canvas.style.cursor = "default";
     requestRender();
   };
 

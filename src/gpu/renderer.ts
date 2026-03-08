@@ -29,6 +29,10 @@ interface RefractionArrowSnapshot {
   refraction: number;
   /** 深度衰减比例。 */
   depth: number;
+  /** 箭头采样偏移 x。 */
+  offsetX: number;
+  /** 箭头采样偏移 y。 */
+  offsetY: number;
 }
 
 /**
@@ -49,7 +53,9 @@ function snapshotEquals(
     Math.abs(previous.width - next.width) < FLOAT_EPSILON &&
     Math.abs(previous.height - next.height) < FLOAT_EPSILON &&
     Math.abs(previous.refraction - next.refraction) < FLOAT_EPSILON &&
-    Math.abs(previous.depth - next.depth) < FLOAT_EPSILON
+    Math.abs(previous.depth - next.depth) < FLOAT_EPSILON &&
+    Math.abs(previous.offsetX - next.offsetX) < FLOAT_EPSILON &&
+    Math.abs(previous.offsetY - next.offsetY) < FLOAT_EPSILON
   );
 }
 
@@ -161,6 +167,8 @@ export function createRenderer({
       height: state.glass.height,
       refraction: params.refraction,
       depth: params.depth,
+      offsetX: state.refractionArrowOffset.x,
+      offsetY: state.refractionArrowOffset.y,
     };
 
     // 几何与参数均未变化时，直接复用上次上传的实例数据。
@@ -176,6 +184,7 @@ export function createRenderer({
       state.glass,
       params,
       REFRACTION_ARROW_SPACING,
+      state.refractionArrowOffset,
     );
     refractionArrowSnapshot = nextSnapshot;
     refractionArrowCount = arrows.length;

@@ -1,5 +1,13 @@
 /** 拖拽模式类型。 */
-export type DragMode = "move" | "resize";
+export type DragMode = "move" | "resize" | "background";
+
+/** 二维偏移量。 */
+export interface Offset2D {
+  /** x 偏移。 */
+  x: number;
+  /** y 偏移。 */
+  y: number;
+}
 
 /** 缩放命中的边集合。 */
 export interface ResizeEdges {

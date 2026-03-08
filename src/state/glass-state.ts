@@ -1,5 +1,10 @@
 import type { CanvasState, DragState, GlassState } from "../types/state";
-import type { DragMode, GlassRect, ResizeEdges } from "../types/common";
+import type {
+  DragMode,
+  GlassRect,
+  Offset2D,
+  ResizeEdges,
+} from "../types/common";
 import { clamp } from "../utils/math";
 
 interface CreateGlassStateOptions {
@@ -29,6 +34,11 @@ export function createGlassState({
     cssHeight: 0,
   };
 
+  const refractionArrowOffset: Offset2D = {
+    x: 0,
+    y: 0,
+  };
+
   const drag: DragState = {
     active: false,
     mode: "move",
@@ -39,6 +49,8 @@ export function createGlassState({
     startTop: 0,
     startWidth: 0,
     startHeight: 0,
+    startArrowOffsetX: 0,
+    startArrowOffsetY: 0,
     left: false,
     right: false,
     top: false,
@@ -154,6 +166,9 @@ export function createGlassState({
     // 记录玻璃起始尺寸。
     drag.startWidth = glass.width;
     drag.startHeight = glass.height;
+    // 记录箭头偏移起点。
+    drag.startArrowOffsetX = refractionArrowOffset.x;
+    drag.startArrowOffsetY = refractionArrowOffset.y;
     // 记录命中边。
     drag.left = !!edges?.left;
     drag.right = !!edges?.right;
@@ -189,6 +204,19 @@ export function createGlassState({
     glass.top = drag.startTop + deltaTop;
     // 夹取边界与尺寸。
     clampGlass(canvas.cssWidth, canvas.cssHeight);
+  }
+
+  /**
+   * 应用背景拖拽，用于平移箭头采样偏移。
+   * @param pointerLeft 指针横坐标。
+   * @param pointerTop 指针纵坐标。
+   * @returns 无返回值。
+   */
+  function applyBackgroundDrag(pointerLeft: number, pointerTop: number): void {
+    const deltaLeft = pointerLeft - drag.startPointerLeft;
+    const deltaTop = pointerTop - drag.startPointerTop;
+    refractionArrowOffset.x = drag.startArrowOffsetX + deltaLeft;
+    refractionArrowOffset.y = drag.startArrowOffsetY + deltaTop;
   }
 
   /**
@@ -292,11 +320,13 @@ export function createGlassState({
     glass,
     drag,
     canvas,
+    refractionArrowOffset,
     clampGlass,
     updateCanvasState,
     startDrag,
     endDrag,
     applyMove,
     applyResize,
+    applyBackgroundDrag,
   };
 }

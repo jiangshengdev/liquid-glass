@@ -1,4 +1,4 @@
-import type { GlassParams, GlassRect } from "../types/common";
+import type { GlassParams, GlassRect, Offset2D } from "../types/common";
 
 /** 二维向量。 */
 export interface Vec2 {
@@ -34,6 +34,7 @@ export interface RefractionArrow {
 
 const EPSILON = 1e-6;
 const GOLDEN_RATIO_CONJUGATE = 0.6180339887498949;
+const ZERO_OFFSET: Offset2D = { x: 0, y: 0 };
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -67,6 +68,10 @@ function normalize(value: Vec2): Vec2 {
 
 function positiveModulo(value: number, divisor: number): number {
   return ((value % divisor) + divisor) % divisor;
+}
+
+function centeredModulo(value: number, divisor: number): number {
+  return positiveModulo(value + divisor * 0.5, divisor) - divisor * 0.5;
 }
 
 function overlayCenter(glass: GlassRect): Vec2 {
@@ -251,11 +256,13 @@ function appendRefractionArrowAtDestination(
 /**
  * 直接按边界带分层采样箭头。
  * 箭头含义：原始像素位置 -> 经过折射后显示到的位置。
+ * `samplingOffset.x` 控制沿边界切线方向的滑动，`samplingOffset.y` 控制边界带内部层的起始偏移。
  */
 export function buildRefractionArrows(
   glass: GlassRect,
   params: GlassParams,
   spacing = 20,
+  samplingOffset: Offset2D = ZERO_OFFSET,
 ): RefractionArrow[] {
   const arrows: RefractionArrow[] = [];
   const center = overlayCenter(glass);
@@ -267,8 +274,15 @@ export function buildRefractionArrows(
 
   if (maxDistanceInside <= EPSILON) return arrows;
 
+  const tangentialShift = centeredModulo(samplingOffset.x, spacing);
+  const radialShift = centeredModulo(samplingOffset.y, radialSpacing);
+  let firstDistanceInside = radialSpacing * 0.5 + radialShift;
+  while (firstDistanceInside <= EPSILON) {
+    firstDistanceInside += radialSpacing;
+  }
+
   for (
-    let layerIndex = 0, distanceInside = radialSpacing * 0.5;
+    let layerIndex = 0, distanceInside = firstDistanceInside;
     distanceInside <= maxDistanceInside;
     layerIndex += 1, distanceInside += radialSpacing
   ) {
@@ -283,12 +297,18 @@ export function buildRefractionArrows(
       0.5 + layerIndex * GOLDEN_RATIO_CONJUGATE,
       1,
     );
-    const lineOffset = spacing * linePhase;
+    const lineOffset = positiveModulo(
+      spacing * linePhase + tangentialShift,
+      spacing,
+    );
     const arcPhase = positiveModulo(
       linePhase + GOLDEN_RATIO_CONJUGATE * 0.5,
       1,
     );
-    const arcOffset = spacing * arcPhase;
+    const arcOffset = positiveModulo(
+      spacing * arcPhase + tangentialShift,
+      spacing,
+    );
 
     if (straightLength > EPSILON) {
       for (

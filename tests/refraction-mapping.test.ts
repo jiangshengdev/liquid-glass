@@ -117,4 +117,29 @@ describe("debug/refraction-mapping", () => {
       collectPhaseKeys(topStraightArrows),
     );
   });
+  it("offsets arrow sampling when a background drag delta is provided", () => {
+    const baseArrows = buildRefractionArrows(glass, params, 20);
+    const offsetArrows = buildRefractionArrows(glass, params, 20, {
+      x: 9,
+      y: 4,
+    });
+
+    expect(offsetArrows.length).toBeGreaterThan(0);
+    expect(offsetArrows[0].destination.x).not.toBeCloseTo(
+      baseArrows[0].destination.x,
+      6,
+    );
+
+    const strongestOffsetArrow = offsetArrows.reduce((best, arrow) =>
+      arrow.displacement > best.displacement ? arrow : best,
+    );
+    const sampled = sampleRefractionAtDestination(
+      strongestOffsetArrow.destination,
+      glass,
+      params,
+    );
+
+    expect(sampled.source.x).toBeCloseTo(strongestOffsetArrow.source.x, 6);
+    expect(sampled.source.y).toBeCloseTo(strongestOffsetArrow.source.y, 6);
+  });
 });

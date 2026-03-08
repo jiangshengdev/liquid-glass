@@ -67,4 +67,22 @@ describe("state/glass-state", () => {
 
     expect(state.glass.width).toBe(240);
   });
+
+  it("updates refraction arrow offset while dragging background", () => {
+    const state = createGlassState({ minWidth: 240, minHeight: 96 });
+    state.updateCanvasState({
+      pixelWidth: 1200,
+      pixelHeight: 700,
+      devicePixelRatio: 1,
+      cssWidth: 1200,
+      cssHeight: 700,
+    });
+
+    state.startDrag("background", 9, 120, 140);
+    state.applyBackgroundDrag(168, 116);
+    state.endDrag(9);
+
+    expect(state.refractionArrowOffset.x).toBe(48);
+    expect(state.refractionArrowOffset.y).toBe(-24);
+  });
 });

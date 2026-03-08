@@ -1,4 +1,4 @@
-import type { DragMode, GlassRect, ResizeEdges } from "./common";
+import type { DragMode, GlassRect, Offset2D, ResizeEdges } from "./common";
 
 /** 画布尺寸与像素比状态。 */
 export interface CanvasState {
@@ -34,6 +34,10 @@ export interface DragState extends ResizeEdges {
   startWidth: number;
   /** 拖拽起点玻璃高度。 */
   startHeight: number;
+  /** 拖拽起点箭头偏移 x。 */
+  startArrowOffsetX: number;
+  /** 拖拽起点箭头偏移 y。 */
+  startArrowOffsetY: number;
 }
 
 /** 玻璃状态容器与操作方法。 */
@@ -44,6 +48,8 @@ export interface GlassState {
   drag: DragState;
   /** 画布状态。 */
   canvas: CanvasState;
+  /** 折射箭头采样偏移。 */
+  refractionArrowOffset: Offset2D;
   /** 对玻璃矩形执行尺寸与边界夹取。 */
   clampGlass(cssWidth: number, cssHeight: number): void;
   /** 更新画布状态，并返回是否发生变化。 */
@@ -62,4 +68,6 @@ export interface GlassState {
   applyMove(pointerLeft: number, pointerTop: number): void;
   /** 应用缩放拖拽。 */
   applyResize(pointerLeft: number, pointerTop: number): void;
+  /** 应用背景拖拽，调整箭头采样偏移。 */
+  applyBackgroundDrag(pointerLeft: number, pointerTop: number): void;
 }
