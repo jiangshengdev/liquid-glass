@@ -142,4 +142,45 @@ describe("debug/refraction-mapping", () => {
     expect(sampled.source.x).toBeCloseTo(strongestOffsetArrow.source.x, 6);
     expect(sampled.source.y).toBeCloseTo(strongestOffsetArrow.source.y, 6);
   });
+
+  it("keeps arc sampling continuous at the top-right and bottom-right seams", () => {
+    const spacing = 20;
+    const arrows = buildRefractionArrows(glass, params, spacing);
+    const outerLayerDistance = Math.min(
+      ...arrows.map((arrow) => arrow.distanceInside),
+    );
+    const outerLayerArrows = arrows.filter(
+      (arrow) => Math.abs(arrow.distanceInside - outerLayerDistance) < 0.01,
+    );
+    const radius = glass.height * 0.5;
+    const insetRadius = radius - outerLayerDistance;
+    const rightArcCenterX = glass.left + glass.width - radius;
+    const rightArcCenterY = glass.top + radius;
+    const topStraightY = glass.top + outerLayerDistance;
+    const topStraightArrows = outerLayerArrows
+      .filter(
+        (arrow) =>
+          Math.abs(arrow.destination.y - topStraightY) < 0.01 &&
+          arrow.destination.x <= rightArcCenterX,
+      )
+      .sort((a, b) => a.destination.x - b.destination.x);
+    const rightSeamGap =
+      rightArcCenterX -
+      topStraightArrows[topStraightArrows.length - 1].destination.x;
+    const rightArcOffsets = outerLayerArrows
+      .filter((arrow) => arrow.destination.x >= rightArcCenterX)
+      .map((arrow) => {
+        const angle = Math.atan2(
+          arrow.destination.y - rightArcCenterY,
+          arrow.destination.x - rightArcCenterX,
+        );
+        return (angle + Math.PI * 0.5) * insetRadius;
+      })
+      .sort((a, b) => a - b);
+
+    expect(rightArcOffsets[0]).toBeCloseTo(rightSeamGap, 6);
+    expect(
+      Math.PI * insetRadius - rightArcOffsets[rightArcOffsets.length - 1],
+    ).toBeCloseTo(rightSeamGap, 6);
+  });
 });

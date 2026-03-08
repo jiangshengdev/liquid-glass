@@ -253,6 +253,81 @@ function appendRefractionArrowAtDestination(
   });
 }
 
+function segmentStartGap(startOffset: number): number {
+  return startOffset <= EPSILON ? 0 : startOffset;
+}
+
+function segmentEndGap(
+  segmentLength: number,
+  startOffset: number,
+  spacing: number,
+): number {
+  const gap = positiveModulo(segmentLength - startOffset, spacing);
+  return gap <= EPSILON ? spacing : gap;
+}
+
+function buildTwoSidedArcOffsets(
+  arcLength: number,
+  startGap: number,
+  endGap: number,
+  spacing: number,
+): number[] {
+  const candidates: Array<{ offset: number; seamDistance: number }> = [];
+  const minimumOffsetGap = Math.max(1, spacing * 0.35);
+  const firstStartOffset = startGap <= EPSILON ? spacing : startGap;
+  const firstEndGap = endGap <= EPSILON ? spacing : endGap;
+
+  for (
+    let seamDistance = firstStartOffset;
+    seamDistance < arcLength;
+    seamDistance += spacing
+  ) {
+    candidates.push({ offset: seamDistance, seamDistance });
+  }
+
+  for (
+    let seamDistance = firstEndGap;
+    seamDistance < arcLength;
+    seamDistance += spacing
+  ) {
+    candidates.push({ offset: arcLength - seamDistance, seamDistance });
+  }
+
+  candidates.sort((a, b) => a.offset - b.offset);
+  const offsets: Array<{ offset: number; seamDistance: number }> = [];
+
+  for (const candidate of candidates) {
+    const previous = offsets[offsets.length - 1];
+    if (!previous || candidate.offset - previous.offset >= minimumOffsetGap) {
+      offsets.push(candidate);
+      continue;
+    }
+
+    if (candidate.seamDistance < previous.seamDistance) {
+      offsets[offsets.length - 1] = candidate;
+    }
+  }
+
+  return offsets.map((entry) => entry.offset);
+}
+
+function appendArcSamples(
+  offsetsFromStart: number[],
+  offsetToPoint: (offsetFromStart: number) => Vec2,
+  glass: GlassRect,
+  params: GlassParams,
+  arrows: RefractionArrow[],
+): void {
+  for (const offsetFromStart of offsetsFromStart) {
+    appendRefractionArrowAtDestination(
+      offsetToPoint(offsetFromStart),
+      glass,
+      params,
+      arrows,
+    );
+  }
+}
+
 /**
  * 直接按边界带分层采样箭头。
  * 箭头含义：原始像素位置 -> 经过折射后显示到的位置。
@@ -301,14 +376,6 @@ export function buildRefractionArrows(
       spacing * linePhase + tangentialShift,
       spacing,
     );
-    const arcPhase = positiveModulo(
-      linePhase + GOLDEN_RATIO_CONJUGATE * 0.5,
-      1,
-    );
-    const arcOffset = positiveModulo(
-      spacing * arcPhase + tangentialShift,
-      spacing,
-    );
 
     if (straightLength > EPSILON) {
       for (
@@ -334,34 +401,47 @@ export function buildRefractionArrows(
 
     if (arcLength <= EPSILON) continue;
 
-    for (
-      let sideOffset = arcOffset;
-      sideOffset < arcLength;
-      sideOffset += spacing
-    ) {
-      appendRefractionArrowAtDestination(
+    const leftSeamGap = segmentStartGap(lineOffset);
+    const rightSeamGap = segmentEndGap(straightLength, lineOffset, spacing);
+    const rightArcOffsets = buildTwoSidedArcOffsets(
+      arcLength,
+      rightSeamGap,
+      rightSeamGap,
+      spacing,
+    );
+    const leftArcOffsets = buildTwoSidedArcOffsets(
+      arcLength,
+      leftSeamGap,
+      leftSeamGap,
+      spacing,
+    );
+
+    appendArcSamples(
+      rightArcOffsets,
+      (offsetFromTop) =>
         pointOnInsetCapsuleBoundary(
-          straightLength + sideOffset,
+          straightLength + offsetFromTop,
           center,
           coreHalfWidth,
           insetRadius,
         ),
-        glass,
-        params,
-        arrows,
-      );
-      appendRefractionArrowAtDestination(
+      glass,
+      params,
+      arrows,
+    );
+    appendArcSamples(
+      leftArcOffsets,
+      (offsetFromBottom) =>
         pointOnInsetCapsuleBoundary(
-          straightLength * 2 + arcLength + sideOffset,
+          straightLength * 2 + arcLength + offsetFromBottom,
           center,
           coreHalfWidth,
           insetRadius,
         ),
-        glass,
-        params,
-        arrows,
-      );
-    }
+      glass,
+      params,
+      arrows,
+    );
   }
 
   return arrows;
