@@ -27,6 +27,8 @@ export interface BootstrapResult {
   canvasContext: GPUCanvasContext;
   /** 玻璃 UI 元素（可能为空）。 */
   glassUi: HTMLDivElement | null;
+  /** 折射箭头调试开关。 */
+  refractionDebugToggle: HTMLInputElement | null;
   /** 画布首选交换链格式。 */
   presentationFormat: GPUTextureFormat;
   /** 纹理采样器。 */
@@ -133,6 +135,15 @@ export async function bootstrapWebGpuApp(): Promise<BootstrapResult | null> {
   const glassUiNode = document.getElementById("glass-ui");
   const glassUi = glassUiNode instanceof HTMLDivElement ? glassUiNode : null;
 
+  // 获取折射箭头调试开关。
+  const refractionDebugToggleNode = document.getElementById(
+    "debug-refraction-arrows",
+  );
+  const refractionDebugToggle =
+    refractionDebugToggleNode instanceof HTMLInputElement
+      ? refractionDebugToggleNode
+      : null;
+
   // 选择优先格式，兼容旧实现。
   const presentationFormat = gpu.getPreferredCanvasFormat
     ? gpu.getPreferredCanvasFormat()
@@ -215,6 +226,7 @@ export async function bootstrapWebGpuApp(): Promise<BootstrapResult | null> {
     canvas,
     canvasContext,
     glassUi,
+    refractionDebugToggle,
     presentationFormat,
     sampler,
     imageTexture,

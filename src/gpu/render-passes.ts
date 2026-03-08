@@ -107,6 +107,8 @@ interface EncodeFinalPassOptions {
   pipelines: RendererPipelines;
   /** 折射箭头实例数量。 */
   refractionArrowCount: number;
+  /** 是否显示折射箭头调试层。 */
+  refractionDebugVisible: boolean;
 }
 
 /**
@@ -120,6 +122,7 @@ export function encodeFinalPass({
   targets,
   pipelines,
   refractionArrowCount,
+  refractionDebugVisible,
 }: EncodeFinalPassOptions): void {
   // 获取交换链纹理视图。
   const view = canvasContext.getCurrentTexture().createView();
@@ -150,7 +153,7 @@ export function encodeFinalPass({
   finalPass.draw(3);
 
   // 最后叠加 GPU 实例化箭头调试层。
-  if (refractionArrowCount > 0) {
+  if (refractionDebugVisible && refractionArrowCount > 0) {
     finalPass.setBindGroup(1, pipelines.refractionDebugBindGroup);
     finalPass.setPipeline(pipelines.refractionDebugPipeline);
     // 每个箭头实例由 9 个顶点拼出箭杆与箭头头。

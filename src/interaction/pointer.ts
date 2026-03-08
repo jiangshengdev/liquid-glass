@@ -32,6 +32,7 @@ export function attachPointerHandlers({
   ensureCanvasConfigured,
   requestRender,
   updateGlassUi,
+  isRefractionDebugVisible,
   stoppedRef,
 }: PointerHandlersDeps): () => void {
   const updateHoverState = (pointerLeft: number, pointerTop: number): void => {
@@ -47,7 +48,11 @@ export function attachPointerHandlers({
       return;
     }
 
-    canvas.style.cursor = cursorForHit("background", hit.edges) || "grab";
+    if (isRefractionDebugVisible()) {
+      canvas.style.cursor = cursorForHit("background", hit.edges) || "grab";
+    } else {
+      canvas.style.cursor = "default";
+    }
     updateGlassUi(false);
   };
 
@@ -66,7 +71,9 @@ export function attachPointerHandlers({
       pointerPosition.top,
       resizeMargin,
     );
-    const dragMode = hit.mode ?? "background";
+    const dragMode =
+      hit.mode ?? (isRefractionDebugVisible() ? "background" : null);
+    if (!dragMode) return;
 
     // 捕获指针，确保拖拽不中断。
     canvas.setPointerCapture(event.pointerId);

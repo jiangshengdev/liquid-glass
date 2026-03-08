@@ -15,6 +15,8 @@ export interface PointerHandlersDeps {
   requestRender: () => void;
   /** 更新玻璃 UI 显示状态。 */
   updateGlassUi: (visible: boolean) => void;
+  /** 是否显示折射箭头调试层。 */
+  isRefractionDebugVisible: () => boolean;
   /** 渲染停止标记。 */
   stoppedRef: StoppedRef;
 }

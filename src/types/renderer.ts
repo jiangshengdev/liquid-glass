@@ -11,6 +11,8 @@ export interface Renderer {
   render(): void;
   /** 标记场景是否需要重建离屏结果。 */
   setSceneDirty(value: boolean): void;
+  /** 设置折射箭头调试层显隐。 */
+  setRefractionDebugVisible(value: boolean): void;
 }
 
 /** 创建渲染器所需依赖集合。 */

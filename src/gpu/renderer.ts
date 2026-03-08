@@ -112,6 +112,8 @@ export function createRenderer({
   let refractionArrowCount = 0;
   // 标记箭头实例缓冲是否需要重建。
   let refractionArrowsDirty = true;
+  // 当前是否显示折射箭头调试层。
+  let refractionDebugVisible = true;
   // 记录最近一次写入箭头缓冲时的几何与参数快照。
   let refractionArrowSnapshot: RefractionArrowSnapshot | null = null;
 
@@ -327,6 +329,7 @@ export function createRenderer({
       targets,
       pipelines,
       refractionArrowCount,
+      refractionDebugVisible,
     });
 
     // 提交命令到 GPU 队列。
@@ -341,6 +344,9 @@ export function createRenderer({
       // 外部标记场景是否脏；玻璃变化时也需要刷新箭头实例。
       sceneDirty = !!value;
       refractionArrowsDirty = true;
+    },
+    setRefractionDebugVisible(value: boolean) {
+      refractionDebugVisible = !!value;
     },
   };
 }

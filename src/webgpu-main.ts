@@ -33,6 +33,7 @@ async function main(): Promise<void> {
     canvas,
     canvasContext,
     glassUi,
+    refractionDebugToggle,
     presentationFormat,
     sampler,
     imageTexture,
@@ -113,6 +114,29 @@ async function main(): Promise<void> {
   // 创建运行时调度器。
   const runtime = createRuntime({ device, renderer });
 
+  // 同步初始调试开关状态。
+  let refractionDebugVisible = refractionDebugToggle?.checked ?? true;
+  renderer.setRefractionDebugVisible(refractionDebugVisible);
+
+  // 绑定折射箭头调试开关。
+  if (refractionDebugToggle) {
+    const onRefractionDebugToggleChange = (): void => {
+      refractionDebugVisible = refractionDebugToggle.checked;
+      renderer.setRefractionDebugVisible(refractionDebugVisible);
+      runtime.requestRender();
+    };
+    refractionDebugToggle.addEventListener(
+      "change",
+      onRefractionDebugToggleChange,
+    );
+    runtime.addCleanup(() => {
+      refractionDebugToggle.removeEventListener(
+        "change",
+        onRefractionDebugToggleChange,
+      );
+    });
+  }
+
   // 绑定指针交互。
   const disposePointerHandlers = attachPointerHandlers({
     canvas,
@@ -121,6 +145,7 @@ async function main(): Promise<void> {
     ensureCanvasConfigured: renderer.ensureCanvasConfigured,
     requestRender: runtime.requestRender,
     updateGlassUi,
+    isRefractionDebugVisible: () => refractionDebugVisible,
     stoppedRef: runtime.stoppedRef,
   });
   // 注册清理函数。

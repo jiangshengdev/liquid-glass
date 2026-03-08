@@ -175,6 +175,56 @@ canvas {
   transform: translate(50%, 50%);
 }
 
+/* 调试面板 */
+.debug-panel {
+  /* 绝对定位到右上角 */
+  position: absolute;
+  /* 顶部边距 */
+  top: 18px;
+  /* 右侧边距 */
+  right: 18px;
+  /* 提升层级，确保位于画布与玻璃 UI 之上 */
+  z-index: 8;
+  /* 允许交互 */
+  pointer-events: auto;
+}
+
+/* 调试开关 */
+.debug-toggle {
+  /* 横向排列 */
+  display: inline-flex;
+  /* 垂直居中 */
+  align-items: center;
+  /* 控件间距 */
+  gap: 10px;
+  /* 内边距 */
+  padding: 10px 14px;
+  /* 圆角 */
+  border-radius: 999px;
+  /* 半透明浅色背景 */
+  background: rgba(255, 255, 255, 0.18);
+  /* 描边 */
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  /* 轻微模糊，保持玻璃调性 */
+  backdrop-filter: blur(18px);
+  /* 字重 */
+  font-weight: 600;
+  /* 字距 */
+  letter-spacing: 0.01em;
+  /* 文本不可选 */
+  user-select: none;
+}
+
+/* 调试开关复选框 */
+.debug-toggle input {
+  /* 明确尺寸 */
+  width: 16px;
+  /* 明确尺寸 */
+  height: 16px;
+  /* 移除默认外边距 */
+  margin: 0;
+}
+
 /* 隐藏属性统一处理 */
 [hidden] {
   /* 强制隐藏 */
