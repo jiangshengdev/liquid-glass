@@ -225,6 +225,30 @@ function pointOnInsetCapsuleBoundary(
 }
 
 /**
+ * 按最终显示位置采样并追加一根有效折射箭头。
+ * 箭头语义始终保持为：原始像素位置 -> 扭曲后显示位置。
+ */
+function appendRefractionArrowAtDestination(
+  destination: Vec2,
+  glass: GlassRect,
+  params: GlassParams,
+  arrows: RefractionArrow[],
+): void {
+  const sample = sampleRefractionAtDestination(destination, glass, params);
+  if (!sample.inside) return;
+
+  const displacement = length(subtract(destination, sample.source));
+  if (displacement <= 0.1) return;
+
+  arrows.push({
+    source: sample.source,
+    destination,
+    displacement,
+    distanceInside: Math.max(0, -sample.signedDistance),
+  });
+}
+
+/**
  * 直接按边界带分层采样箭头。
  * 箭头含义：原始像素位置 -> 经过折射后显示到的位置。
  */
@@ -252,38 +276,71 @@ export function buildRefractionArrows(
     if (insetRadius <= EPSILON) continue;
 
     const straightLength = coreHalfWidth * 2;
-    const perimeter = straightLength * 2 + Math.PI * insetRadius * 2;
-    // 顶部/底部直线段的法线方向几乎一致，若层间相位重复，箭头会叠成竖线。
-    // 这里仅改变每一层沿切线方向的采样起点，不改任何箭头的真实 source/destination。
-    const layerPhase = positiveModulo(
+    const arcLength = Math.PI * insetRadius;
+    // 顶部/底部直线段单独按本地 x 坐标错开采样，
+    // 避免底边再被右侧圆弧长度带偏后重叠成同一批竖列。
+    const linePhase = positiveModulo(
       0.5 + layerIndex * GOLDEN_RATIO_CONJUGATE,
       1,
     );
-    const layerOffset = spacing * layerPhase;
+    const lineOffset = spacing * linePhase;
+    const arcPhase = positiveModulo(
+      linePhase + GOLDEN_RATIO_CONJUGATE * 0.5,
+      1,
+    );
+    const arcOffset = spacing * arcPhase;
+
+    if (straightLength > EPSILON) {
+      for (
+        let straightOffset = lineOffset;
+        straightOffset < straightLength;
+        straightOffset += spacing
+      ) {
+        const x = center.x - coreHalfWidth + straightOffset;
+        appendRefractionArrowAtDestination(
+          { x, y: center.y - insetRadius },
+          glass,
+          params,
+          arrows,
+        );
+        appendRefractionArrowAtDestination(
+          { x, y: center.y + insetRadius },
+          glass,
+          params,
+          arrows,
+        );
+      }
+    }
+
+    if (arcLength <= EPSILON) continue;
 
     for (
-      let perimeterOffset = layerOffset;
-      perimeterOffset < perimeter;
-      perimeterOffset += spacing
+      let sideOffset = arcOffset;
+      sideOffset < arcLength;
+      sideOffset += spacing
     ) {
-      const destination = pointOnInsetCapsuleBoundary(
-        perimeterOffset,
-        center,
-        coreHalfWidth,
-        insetRadius,
+      appendRefractionArrowAtDestination(
+        pointOnInsetCapsuleBoundary(
+          straightLength + sideOffset,
+          center,
+          coreHalfWidth,
+          insetRadius,
+        ),
+        glass,
+        params,
+        arrows,
       );
-      const sample = sampleRefractionAtDestination(destination, glass, params);
-      if (!sample.inside) continue;
-
-      const displacement = length(subtract(destination, sample.source));
-      if (displacement <= 0.1) continue;
-
-      arrows.push({
-        source: sample.source,
-        destination,
-        displacement,
-        distanceInside: Math.max(0, -sample.signedDistance),
-      });
+      appendRefractionArrowAtDestination(
+        pointOnInsetCapsuleBoundary(
+          straightLength * 2 + arcLength + sideOffset,
+          center,
+          coreHalfWidth,
+          insetRadius,
+        ),
+        glass,
+        params,
+        arrows,
+      );
     }
   }
 

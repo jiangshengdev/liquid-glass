@@ -83,4 +83,38 @@ describe("debug/refraction-mapping", () => {
 
     expect(phaseKeys.size).toBeGreaterThan(2);
   });
+
+  it("keeps bottom straight-edge phases aligned with the top edge", () => {
+    const spacing = 14;
+    const arrows = buildRefractionArrows(glass, params, spacing);
+    const radius = glass.height * 0.5;
+    const edgeMargin = 24;
+    const topStraightArrows = arrows.filter(
+      (arrow) =>
+        arrow.destination.y < glass.top + radius * params.depth + 1 &&
+        arrow.destination.x > glass.left + radius + edgeMargin &&
+        arrow.destination.x < glass.left + glass.width - radius - edgeMargin,
+    );
+    const bottomStraightArrows = arrows.filter(
+      (arrow) =>
+        arrow.destination.y >
+          glass.top + glass.height - radius * params.depth - 1 &&
+        arrow.destination.x > glass.left + radius + edgeMargin &&
+        arrow.destination.x < glass.left + glass.width - radius - edgeMargin,
+    );
+    const collectPhaseKeys = (sampledArrows: typeof arrows) =>
+      [
+        ...new Set(
+          sampledArrows.map((arrow) =>
+            (((arrow.destination.x - glass.left) % spacing) + spacing).toFixed(
+              2,
+            ),
+          ),
+        ),
+      ].sort();
+
+    expect(collectPhaseKeys(bottomStraightArrows)).toEqual(
+      collectPhaseKeys(topStraightArrows),
+    );
+  });
 });

@@ -11,7 +11,7 @@ import type { Renderer, RendererDeps } from "../types/renderer";
 // 每个箭头实例写入 4 个 f32：source.xy + destination.xy。
 const REFRACTION_ARROW_STRIDE = 16;
 // 箭头采样步长（CSS 像素）：值越小，边缘带箭头越密。
-const REFRACTION_ARROW_SPACING = 14;
+const REFRACTION_ARROW_SPACING = 20;
 // 浮点比较容差，避免微小抖动导致重复重建箭头。
 const FLOAT_EPSILON = 1e-3;
 
