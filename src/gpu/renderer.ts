@@ -11,6 +11,7 @@ import { createPipelines } from "./pipelines";
 import { encodeFinalPass, encodeScenePasses } from "./render-passes";
 import { packUniforms } from "./uniforms";
 import type { Renderer, RendererDeps } from "../types/renderer";
+import { syncHtmlInCanvasElementTransform } from "../utils/html-in-canvas";
 
 // 每个箭头实例写入 4 个 f32：source.xy + destination.xy。
 const REFRACTION_ARROW_STRIDE = 16;
@@ -495,6 +496,11 @@ export function createRenderer({
       queue.copyElementImageToTexture(glassButtonLabel, {
         texture: labelTexture,
       });
+      syncHtmlInCanvasElementTransform({
+        canvas,
+        element: glassButtonLabel,
+        drawTransform: new DOMMatrix(),
+      });
       labelTextureReady = true;
     },
     uploadBackgroundHtmlTexture() {
@@ -503,6 +509,11 @@ export function createRenderer({
       ensureBackgroundHtmlTextureSize();
       queue.copyElementImageToTexture(backgroundHtmlLayer, {
         texture: backgroundHtmlTexture,
+      });
+      syncHtmlInCanvasElementTransform({
+        canvas,
+        element: backgroundHtmlLayer,
+        drawTransform: new DOMMatrix(),
       });
       backgroundHtmlTextureReady = true;
       sceneDirty = true;

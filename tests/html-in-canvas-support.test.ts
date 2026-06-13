@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { hasHtmlInCanvasWebGpuSupport } from "../src/utils/html-in-canvas";
+import {
+  hasHtmlInCanvasWebGpuSupport,
+  syncHtmlInCanvasElementTransform,
+} from "../src/utils/html-in-canvas";
 
 function canvasWithCapabilities(capabilities: {
   onpaint?: boolean;
@@ -82,5 +85,49 @@ describe("utils/html-in-canvas", () => {
     });
 
     expect(supported).toBe(false);
+  });
+
+  it("syncs the CSS transform returned by getElementTransform", () => {
+    const returnedTransform = {
+      toString: () => "matrix(1, 0, 0, 1, 24, 32)",
+    } as DOMMatrix;
+    const drawTransform = {} as DOMMatrix;
+    const element = { style: { transform: "" } } as HTMLElement;
+    let receivedElement: Element | null = null;
+    let receivedTransform: DOMMatrix | null = null;
+    const canvas = {
+      getElementTransform: (nextElement: Element, nextTransform: DOMMatrix) => {
+        receivedElement = nextElement;
+        receivedTransform = nextTransform;
+        return returnedTransform;
+      },
+    } as HTMLCanvasElement;
+
+    const synced = syncHtmlInCanvasElementTransform({
+      canvas,
+      element,
+      drawTransform,
+    });
+
+    expect(synced).toBe(true);
+    expect(receivedElement).toBe(element);
+    expect(receivedTransform).toBe(drawTransform);
+    expect(element.style.transform).toBe("matrix(1, 0, 0, 1, 24, 32)");
+  });
+
+  it("does not update CSS transform when getElementTransform returns null", () => {
+    const element = { style: { transform: "initial" } } as HTMLElement;
+    const canvas = {
+      getElementTransform: () => null,
+    } as HTMLCanvasElement;
+
+    const synced = syncHtmlInCanvasElementTransform({
+      canvas,
+      element,
+      drawTransform: {} as DOMMatrix,
+    });
+
+    expect(synced).toBe(false);
+    expect(element.style.transform).toBe("initial");
   });
 });

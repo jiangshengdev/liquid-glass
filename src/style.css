@@ -79,6 +79,8 @@ canvas {
   user-select: none;
   /* 独立布局与绘制，便于浏览器复制到纹理 */
   contain: layout paint style;
+  /* 命中同步矩阵以左上角为基准 */
+  transform-origin: 0 0;
   /* 统一 demo 字体 */
   font:
     14px/1.25 ui-sans-serif,
@@ -184,6 +186,28 @@ canvas {
   color: rgba(255, 255, 255, 0.82);
 }
 
+/* 背景 demo 原生控件 */
+.bg-demo-control {
+  /* 控件区域纵向排列 */
+  display: grid;
+  /* 上方留出间距 */
+  margin-top: 22px;
+  /* 行间距 */
+  gap: 10px;
+  /* 字号 */
+  font-size: 13px;
+  /* 字重 */
+  font-weight: 650;
+  /* 文字颜色 */
+  color: rgba(255, 255, 255, 0.72);
+}
+
+/* 背景 demo 滑杆 */
+.bg-demo-control input {
+  /* 占满控件宽度 */
+  width: 100%;
+}
+
 /* demo 指标 */
 .bg-demo-metric {
   /* 字号 */
@@ -276,6 +300,8 @@ canvas {
   pointer-events: none;
   /* 让文本在浏览器侧独立布局 */
   contain: layout paint style;
+  /* 命中同步矩阵以左上角为基准 */
+  transform-origin: 0 0;
 }
 
 /* 玻璃 UI 容器 */

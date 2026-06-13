@@ -11,6 +11,13 @@ describe("index/background-html-layer", () => {
     expect(html).toContain("bg-demo-chip");
   });
 
+  it("includes a real interactive control in the background layer", () => {
+    const html = readFileSync("index.html", "utf8");
+
+    expect(html).toContain('id="background-html-control"');
+    expect(html).toContain('type="range"');
+  });
+
   it("matches the browser viewport size without using inset shorthand", () => {
     const css = readFileSync("src/style.css", "utf8");
     const match = css.match(/\.background-html-layer\s*\{[^}]*\}/);
@@ -28,5 +35,13 @@ describe("index/background-html-layer", () => {
     expect(match).not.toBeNull();
     expect(match?.[0]).toContain("position: absolute");
     expect(match?.[0]).toContain("background: transparent");
+  });
+
+  it("lets background controls inherit layer pointer-event mode", () => {
+    const css = readFileSync("src/style.css", "utf8");
+    const match = css.match(/\.bg-demo-control input\s*\{[^}]*\}/);
+
+    expect(match).not.toBeNull();
+    expect(match?.[0]).not.toContain("pointer-events");
   });
 });
