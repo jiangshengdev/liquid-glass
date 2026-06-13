@@ -16,6 +16,16 @@ describe("index/background-html-layer", () => {
 
     expect(html).toContain('<button class="bg-demo-chip" type="button"');
     expect(html).not.toContain('<span class="bg-demo-chip"');
+    expect(html).not.toContain("aria-pressed");
+  });
+
+  it("uses a real button for the Liquid Glass demo note", () => {
+    const html = readFileSync("index.html", "utf8");
+
+    expect(html).toContain(
+      '<button class="bg-demo-note" type="button">Liquid Glass demo</button>',
+    );
+    expect(html).not.toContain('<div class="bg-demo-note">');
   });
 
   it("includes a real interactive control in the background layer", () => {
@@ -31,6 +41,17 @@ describe("index/background-html-layer", () => {
 
     expect(match).not.toBeNull();
     expect(match?.[0]).toContain("user-select: text");
+    expect(match?.[0]).toContain("cursor: text");
+  });
+
+  it("uses normal button interaction styles instead of toggle styles", () => {
+    const css = readFileSync("src/style.css", "utf8");
+
+    expect(css).toContain(".bg-demo-chip:hover");
+    expect(css).toContain(".bg-demo-chip:active");
+    expect(css).toContain(".bg-demo-note:hover");
+    expect(css).toContain(".bg-demo-note:active");
+    expect(css).not.toContain("[aria-pressed");
   });
 
   it("matches the browser viewport size without using inset shorthand", () => {

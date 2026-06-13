@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { bindBackgroundChipButtons } from "../src/app/background-chip-buttons";
+import { bindBackgroundButtons } from "../src/app/background-buttons";
 
 class FakeButton {
   dataset: Record<string, string> = {};
@@ -24,18 +24,19 @@ class FakeButton {
   }
 }
 
-describe("app/background-chip-buttons", () => {
-  it("toggles pressed state when a background chip button is clicked", () => {
+describe("app/background-buttons", () => {
+  it("records clicks without adding toggle semantics", () => {
     const button = new FakeButton() as unknown as HTMLButtonElement &
       FakeButton;
 
-    bindBackgroundChipButtons([button]);
+    bindBackgroundButtons([button]);
 
-    expect(button.getAttribute("aria-pressed")).toBe("false");
+    expect(button.dataset.clickCount).toBe("0");
+    expect(button.getAttribute("aria-pressed")).toBeUndefined();
 
     button.click();
 
-    expect(button.dataset.pressed).toBe("true");
-    expect(button.getAttribute("aria-pressed")).toBe("true");
+    expect(button.dataset.clickCount).toBe("1");
+    expect(button.getAttribute("aria-pressed")).toBeUndefined();
   });
 });

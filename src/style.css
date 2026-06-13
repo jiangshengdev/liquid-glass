@@ -77,6 +77,8 @@ canvas {
   pointer-events: auto;
   /* debug 关闭时允许背景文本按普通 DOM 选中 */
   user-select: text;
+  /* 背景文本区域使用文本光标 */
+  cursor: text;
   /* 独立布局与绘制，便于浏览器复制到纹理 */
   contain: layout paint style;
   /* 命中同步矩阵以左上角为基准 */
@@ -192,12 +194,26 @@ canvas {
   cursor: pointer;
 }
 
-/* demo 标签按钮按下态 */
-.bg-demo-chip[aria-pressed="true"] {
-  /* 按下时提高亮度，便于验证点击 */
+/* demo 标签按钮悬停态 */
+.bg-demo-chip:hover {
+  /* 悬停时提高亮度 */
   background: rgba(255, 255, 255, 0.28);
-  /* 按下态文字更亮 */
+  /* 悬停态文字更亮 */
   color: rgba(255, 255, 255, 0.96);
+}
+
+/* demo 标签按钮按下态 */
+.bg-demo-chip:active {
+  /* 普通按钮按下时轻微压暗 */
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* demo 标签按钮键盘焦点 */
+.bg-demo-chip:focus-visible {
+  /* 清晰焦点描边 */
+  outline: 2px solid rgba(255, 255, 255, 0.72);
+  /* 焦点描边偏移 */
+  outline-offset: 2px;
 }
 
 /* 背景 demo 原生控件 */
@@ -266,6 +282,32 @@ canvas {
   transform: rotate(-4deg);
   /* 阴影 */
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+  /* 移除原生按钮边框 */
+  border: 0;
+  /* 继承字体 */
+  font: inherit;
+  /* 鼠标样式 */
+  cursor: pointer;
+}
+
+/* 背景便签悬停态 */
+.bg-demo-note:hover {
+  /* 悬停时略微提亮 */
+  background: rgba(255, 255, 255, 0.92);
+}
+
+/* 背景便签按下态 */
+.bg-demo-note:active {
+  /* 普通按钮按下反馈 */
+  background: rgba(255, 255, 255, 0.76);
+}
+
+/* 背景便签键盘焦点 */
+.bg-demo-note:focus-visible {
+  /* 清晰焦点描边 */
+  outline: 2px solid rgba(13, 16, 22, 0.62);
+  /* 焦点描边偏移 */
+  outline-offset: 2px;
 }
 
 /* 透明玻璃命中层：只覆盖玻璃矩形，阻止其下方背景 HTML 交互 */
