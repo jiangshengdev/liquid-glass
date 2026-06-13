@@ -10,8 +10,10 @@ struct Uniforms {
   opticalParams: vec4f,
   // 磨砂强度、光照角度（弧度）、光照强度与填充位。
   lightingParams: vec4f,
-  // 色散、展散与保留位。
+  // 色散、展散、背景 HTML 纹理就绪标记与保留位。
   dispersionParams: vec4f,
+  // 背景 HTML demo 层位置与尺寸（像素，画布坐标系）。
+  backgroundHtmlBounds: vec4f,
   // 覆盖层颜色（非预乘）。
   overlayColor: vec4f,
 }
@@ -20,7 +22,7 @@ struct Uniforms {
 @group(0) @binding(0) var<uniform> sceneUniforms: Uniforms;
 
 // Bind group 1 被所有通道共享。
-// - scene：primaryTexture = 原始图像
+// - scene：primaryTexture = 原始图像，secondaryTexture = 背景 HTML 纹理
 // - blur/present：primaryTexture = 输入纹理（场景纹理 / 模糊纹理）
 // - overlay：primaryTexture = 清晰场景，secondaryTexture = 模糊场景
 @group(1) @binding(0) var primaryTexture: texture_2d<f32>;

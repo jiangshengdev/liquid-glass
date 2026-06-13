@@ -15,6 +15,8 @@ export interface Renderer {
   setRefractionDebugVisible(value: boolean): void;
   /** 上传 HTML-in-Canvas 文本覆盖层纹理。 */
   uploadLabelTexture(): void;
+  /** 上传 HTML-in-Canvas 背景 demo 纹理。 */
+  uploadBackgroundHtmlTexture(): void;
 }
 
 /** 创建渲染器所需依赖集合。 */
@@ -29,6 +31,8 @@ export interface RendererDeps {
   canvasContext: GPUCanvasContext;
   /** HTML-in-Canvas 文本覆盖层元素。 */
   glassButtonLabel: HTMLSpanElement;
+  /** HTML-in-Canvas 背景 demo 层元素。 */
+  backgroundHtmlLayer: HTMLDivElement | null;
   /** 纹理采样器。 */
   sampler: GPUSampler;
   /** 背景图纹理。 */

@@ -45,6 +45,8 @@ interface CreatePipelinesOptions {
   refractionDebugBuffer: GPUBuffer;
   /** 图像纹理。 */
   imageTexture: GPUTexture;
+  /** 背景 HTML demo 纹理。 */
+  backgroundHtmlTexture: GPUTexture;
   /** 文本覆盖层纹理。 */
   labelTexture: GPUTexture;
   /** 采样器。 */
@@ -63,6 +65,7 @@ export function createPipelines({
   uniformBuffer,
   refractionDebugBuffer,
   imageTexture,
+  backgroundHtmlTexture,
   labelTexture,
   sampler,
 }: CreatePipelinesOptions): RendererPipelines {
@@ -121,8 +124,8 @@ export function createPipelines({
     entries: [
       // 主纹理。
       { binding: 0, resource: imageTexture.createView() },
-      // 次纹理。
-      { binding: 1, resource: imageTexture.createView() },
+      // 次纹理：背景 HTML demo。
+      { binding: 1, resource: backgroundHtmlTexture.createView() },
       // 采样器。
       { binding: 2, resource: sampler },
     ],

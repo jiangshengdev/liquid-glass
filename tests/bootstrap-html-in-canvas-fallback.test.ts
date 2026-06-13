@@ -89,10 +89,15 @@ describe("app/bootstrap HTML-in-Canvas fallback", () => {
   it("continues startup and hides label when HTML-in-Canvas is unsupported", async () => {
     const canvas = new FakeCanvasElement();
     const label = new FakeSpanElement();
+    const backgroundLayer = new FakeDivElement() as FakeDivElement & {
+      hidden: boolean;
+    };
+    backgroundLayer.hidden = false;
     installDomGlobals({
       "webgpu-canvas": canvas,
       "glass-ui": new FakeDivElement(),
       "glass-button-label": label,
+      "background-html-layer": backgroundLayer,
       "debug-refraction-arrows": null,
     });
     installBrowserGlobals();
@@ -104,5 +109,6 @@ describe("app/bootstrap HTML-in-Canvas fallback", () => {
     expect(result).not.toBeNull();
     expect(showFallbackMock).not.toHaveBeenCalled();
     expect(label.hidden).toBe(true);
+    expect(backgroundLayer.hidden).toBe(true);
   });
 });

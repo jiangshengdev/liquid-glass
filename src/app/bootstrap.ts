@@ -32,6 +32,8 @@ export interface BootstrapResult {
   refractionDebugToggle: HTMLInputElement | null;
   /** HTML-in-Canvas 文本覆盖层元素。 */
   glassButtonLabel: HTMLSpanElement;
+  /** HTML-in-Canvas 背景 demo 层元素。 */
+  backgroundHtmlLayer: HTMLDivElement | null;
   /** 当前环境是否支持 HTML-in-Canvas 文本上传。 */
   htmlInCanvasSupported: boolean;
   /** 画布首选交换链格式。 */
@@ -150,10 +152,20 @@ export async function bootstrapWebGpuApp(): Promise<BootstrapResult | null> {
   }
   const glassButtonLabel = glassButtonLabelNode;
 
+  // 获取 HTML-in-Canvas 背景 demo 层。
+  const backgroundHtmlLayerNode = document.getElementById(
+    "background-html-layer",
+  );
+  const backgroundHtmlLayer =
+    backgroundHtmlLayerNode instanceof HTMLDivElement
+      ? backgroundHtmlLayerNode
+      : null;
+
   const htmlInCanvasSupported = hasHtmlInCanvasWebGpuSupport({ canvas, queue });
   glassButtonLabel.hidden = !htmlInCanvasSupported;
+  if (backgroundHtmlLayer) backgroundHtmlLayer.hidden = !htmlInCanvasSupported;
   if (!htmlInCanvasSupported) {
-    log("HTML-in-Canvas unsupported: hiding label overlay");
+    log("HTML-in-Canvas unsupported: hiding HTML demo layers");
   }
 
   // 获取折射箭头调试开关。
@@ -249,6 +261,7 @@ export async function bootstrapWebGpuApp(): Promise<BootstrapResult | null> {
     glassUi,
     refractionDebugToggle,
     glassButtonLabel,
+    backgroundHtmlLayer,
     htmlInCanvasSupported,
     presentationFormat,
     sampler,

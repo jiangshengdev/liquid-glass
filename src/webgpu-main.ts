@@ -35,6 +35,7 @@ async function main(): Promise<void> {
     canvasContext,
     glassUi,
     glassButtonLabel,
+    backgroundHtmlLayer,
     htmlInCanvasSupported,
     refractionDebugToggle,
     presentationFormat,
@@ -95,6 +96,7 @@ async function main(): Promise<void> {
     imageAspect,
     state,
     params: PARAMS,
+    backgroundHtmlLayer,
     devicePixelRatioClamped,
     log,
     updateGlassUi,
@@ -131,6 +133,7 @@ async function main(): Promise<void> {
   if (htmlInCanvasSupported) {
     // HTML-in-Canvas 重绘时上传 label 纹理，并请求最终合成。
     const onCanvasPaint = (): void => {
+      renderer.uploadBackgroundHtmlTexture();
       renderer.uploadLabelTexture();
       runtime.requestRender();
     };

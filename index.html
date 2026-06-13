@@ -9,6 +9,25 @@
   <body>
     <div id="app">
       <canvas id="webgpu-canvas" aria-label="WebGPU 画布" layoutsubtree>
+        <div
+          id="background-html-layer"
+          class="background-html-layer"
+          aria-hidden="true"
+        >
+          <div class="bg-demo-card bg-demo-card-main">
+            <div class="bg-demo-kicker">HTML Layer</div>
+            <div class="bg-demo-title">DOM 内容进入背景纹理</div>
+            <div class="bg-demo-row">
+              <span class="bg-demo-chip">Canvas copy</span>
+              <span class="bg-demo-chip">WebGPU</span>
+            </div>
+          </div>
+          <div class="bg-demo-card bg-demo-card-side">
+            <div class="bg-demo-metric">42ms</div>
+            <div class="bg-demo-caption">paint sync</div>
+          </div>
+          <div class="bg-demo-note">Liquid Glass demo</div>
+        </div>
         <span
           id="glass-button-label"
           class="glass-button-label"

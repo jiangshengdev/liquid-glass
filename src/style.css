@@ -59,6 +59,175 @@ canvas {
   touch-action: none;
 }
 
+/* 背景 HTML demo 层：作为 HTML-in-Canvas 纹理源 */
+.background-html-layer {
+  /* 作为一个有界 DOM 纹理源 */
+  position: absolute;
+  /* 左侧偏移 */
+  left: 7vw;
+  /* 顶部偏移 */
+  top: 12vh;
+  /* 固定宽度，避免复制整屏 DOM */
+  width: min(560px, 78vw);
+  /* 固定高度，避免复制整屏 DOM */
+  height: 320px;
+  /* 不参与指针命中，避免影响当前拖拽交互 */
+  pointer-events: none;
+  /* 避免文本选择影响演示 */
+  user-select: none;
+  /* 独立布局与绘制，便于浏览器复制到纹理 */
+  contain: layout paint style;
+  /* 统一 demo 字体 */
+  font:
+    14px/1.25 ui-sans-serif,
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    Helvetica,
+    Arial;
+}
+
+/* 背景 demo 卡片 */
+.bg-demo-card {
+  /* 绝对定位到画布背景 */
+  position: absolute;
+  /* 限定内容宽度 */
+  width: 260px;
+  /* 内边距 */
+  padding: 18px 20px;
+  /* 半透明深色背景 */
+  background: rgba(9, 12, 18, 0.72);
+  /* 细描边 */
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  /* 小圆角 */
+  border-radius: 8px;
+  /* 柔和阴影 */
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.26);
+  /* 文字颜色 */
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* 主 demo 卡片位置 */
+.bg-demo-card-main {
+  /* 左侧偏移 */
+  left: 0;
+  /* 顶部偏移 */
+  top: 0;
+}
+
+/* 侧边 demo 卡片位置 */
+.bg-demo-card-side {
+  /* 右侧偏移 */
+  right: 0;
+  /* 下方偏移 */
+  bottom: 0;
+  /* 更窄宽度 */
+  width: 160px;
+}
+
+/* demo 小标题 */
+.bg-demo-kicker {
+  /* 文字颜色偏淡 */
+  color: rgba(255, 255, 255, 0.58);
+  /* 字号 */
+  font-size: 12px;
+  /* 字重 */
+  font-weight: 700;
+  /* 大写字母间距 */
+  letter-spacing: 0.08em;
+  /* 转大写 */
+  text-transform: uppercase;
+}
+
+/* demo 标题 */
+.bg-demo-title {
+  /* 顶部间距 */
+  margin-top: 8px;
+  /* 字号 */
+  font-size: 22px;
+  /* 字重 */
+  font-weight: 760;
+  /* 行高 */
+  line-height: 1.12;
+}
+
+/* demo 标签行 */
+.bg-demo-row {
+  /* 顶部间距 */
+  margin-top: 16px;
+  /* 横向排列 */
+  display: flex;
+  /* 允许换行 */
+  flex-wrap: wrap;
+  /* 间距 */
+  gap: 8px;
+}
+
+/* demo 标签 */
+.bg-demo-chip {
+  /* 行内弹性布局 */
+  display: inline-flex;
+  /* 内边距 */
+  padding: 6px 9px;
+  /* 小圆角 */
+  border-radius: 6px;
+  /* 浅色背景 */
+  background: rgba(255, 255, 255, 0.14);
+  /* 字号 */
+  font-size: 12px;
+  /* 字重 */
+  font-weight: 650;
+  /* 文字颜色 */
+  color: rgba(255, 255, 255, 0.82);
+}
+
+/* demo 指标 */
+.bg-demo-metric {
+  /* 字号 */
+  font-size: 34px;
+  /* 字重 */
+  font-weight: 780;
+  /* 行高 */
+  line-height: 1;
+}
+
+/* demo 说明 */
+.bg-demo-caption {
+  /* 顶部间距 */
+  margin-top: 8px;
+  /* 字号 */
+  font-size: 13px;
+  /* 文字颜色偏淡 */
+  color: rgba(255, 255, 255, 0.62);
+}
+
+/* 背景便签 */
+.bg-demo-note {
+  /* 绝对定位 */
+  position: absolute;
+  /* 左侧偏移 */
+  left: 74px;
+  /* 底部偏移 */
+  bottom: 18px;
+  /* 内边距 */
+  padding: 10px 12px;
+  /* 圆角 */
+  border-radius: 7px;
+  /* 亮色背景 */
+  background: rgba(255, 255, 255, 0.82);
+  /* 深色文字 */
+  color: rgba(13, 16, 22, 0.88);
+  /* 字重 */
+  font-weight: 720;
+  /* 字号 */
+  font-size: 13px;
+  /* 轻微旋转 */
+  transform: rotate(-4deg);
+  /* 阴影 */
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
 /* 玻璃按钮文本覆盖层 */
 .glass-button-label {
   /* 绝对定位到画布坐标系 */

@@ -28,7 +28,7 @@ describe("gpu/uniforms", () => {
       params,
     });
 
-    expect(out).toHaveLength(24);
+    expect(out).toHaveLength(28);
     expect(out[0]).toBe(1280);
     expect(out[1]).toBe(720);
     expect(out[2]).toBeCloseTo(16 / 9, 6);
@@ -43,6 +43,32 @@ describe("gpu/uniforms", () => {
     expect(out[12]).toBe(8);
     expect(out[13]).toBeCloseTo((-45 * Math.PI) / 180, 6);
     expect(out[14]).toBeCloseTo(0.8, 6);
-    expect(out[23]).toBeCloseTo(1, 6);
+    expect(out[24]).toBeCloseTo(1, 6);
+    expect(out[27]).toBeCloseTo(1, 6);
+  });
+
+  it("packs background HTML texture bounds and readiness flag", () => {
+    const out = packUniforms({
+      canvasWidth: 1280,
+      canvasHeight: 720,
+      imageAspect: 16 / 9,
+      devicePixelRatio: 2,
+      overlayLeft: 100,
+      overlayTop: 50,
+      overlayWidth: 300,
+      overlayHeight: 120,
+      params,
+      backgroundHtmlReady: true,
+      backgroundHtmlLeft: 40,
+      backgroundHtmlTop: 30,
+      backgroundHtmlWidth: 320,
+      backgroundHtmlHeight: 180,
+    });
+
+    expect(out[18]).toBe(1);
+    expect(out[20]).toBe(80);
+    expect(out[21]).toBe(60);
+    expect(out[22]).toBe(640);
+    expect(out[23]).toBe(360);
   });
 });

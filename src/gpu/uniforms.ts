@@ -20,6 +20,16 @@ export interface UniformPackInput {
   overlayHeight: number;
   /** 玻璃参数。 */
   params: GlassParams;
+  /** 背景 HTML 纹理是否已有可采样内容。 */
+  backgroundHtmlReady?: boolean;
+  /** 背景 HTML 层左侧坐标（CSS 像素）。 */
+  backgroundHtmlLeft?: number;
+  /** 背景 HTML 层顶部坐标（CSS 像素）。 */
+  backgroundHtmlTop?: number;
+  /** 背景 HTML 层宽度（CSS 像素）。 */
+  backgroundHtmlWidth?: number;
+  /** 背景 HTML 层高度（CSS 像素）。 */
+  backgroundHtmlHeight?: number;
 }
 
 /**
@@ -30,13 +40,21 @@ export interface UniformPackInput {
  */
 export function packUniforms(
   input: UniformPackInput,
-  out: Float32Array = new Float32Array(24),
+  out: Float32Array = new Float32Array(28),
 ): Float32Array {
   // 将 CSS 像素统一转换到设备像素空间。
   const overlayLeft = input.overlayLeft * input.devicePixelRatio;
   const overlayTop = input.overlayTop * input.devicePixelRatio;
   const overlayWidth = input.overlayWidth * input.devicePixelRatio;
   const overlayHeight = input.overlayHeight * input.devicePixelRatio;
+  const backgroundHtmlLeft =
+    (input.backgroundHtmlLeft ?? 0) * input.devicePixelRatio;
+  const backgroundHtmlTop =
+    (input.backgroundHtmlTop ?? 0) * input.devicePixelRatio;
+  const backgroundHtmlWidth =
+    (input.backgroundHtmlWidth ?? 1) * input.devicePixelRatio;
+  const backgroundHtmlHeight =
+    (input.backgroundHtmlHeight ?? 1) * input.devicePixelRatio;
   // 半径取高度的一半。
   const overlayRadius = overlayHeight * 0.5;
 
@@ -50,7 +68,7 @@ export function packUniforms(
   // 光照角度转为弧度。
   const lightAngleRad = (input.params.lightAngleDeg * Math.PI) / 180;
 
-  // 按 6 个 vec4 顺序写入，共 24 个 float。
+  // 按 7 个 vec4 顺序写入，共 28 个 float。
   // canvasMetrics
   out[0] = input.canvasWidth;
   out[1] = input.canvasHeight;
@@ -78,14 +96,20 @@ export function packUniforms(
   // dispersionParams
   out[16] = input.params.dispersion;
   out[17] = input.params.splay;
-  out[18] = 0;
+  out[18] = input.backgroundHtmlReady ? 1 : 0;
   out[19] = 0;
 
+  // backgroundHtmlBounds
+  out[20] = backgroundHtmlLeft;
+  out[21] = backgroundHtmlTop;
+  out[22] = backgroundHtmlWidth;
+  out[23] = backgroundHtmlHeight;
+
   // overlayColor
-  out[20] = 1.0;
-  out[21] = 1.0;
-  out[22] = 1.0;
-  out[23] = input.params.alpha;
+  out[24] = 1.0;
+  out[25] = 1.0;
+  out[26] = 1.0;
+  out[27] = input.params.alpha;
 
   return out;
 }

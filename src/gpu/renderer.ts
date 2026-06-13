@@ -74,6 +74,7 @@ export function createRenderer({
   canvas,
   canvasContext,
   glassButtonLabel,
+  backgroundHtmlLayer,
   sampler,
   imageTexture,
   module,
@@ -102,6 +103,16 @@ export function createRenderer({
     }),
   );
 
+  // HTML-in-Canvas 背景 demo 初始纹理，后续按画布像素尺寸重建。
+  let backgroundHtmlTextureWidth = 1;
+  let backgroundHtmlTextureHeight = 1;
+  let backgroundHtmlTexture = device.createTexture(
+    buildLabelTextureDescriptor({
+      width: backgroundHtmlTextureWidth,
+      height: backgroundHtmlTextureHeight,
+    }),
+  );
+
   // 折射箭头实例缓冲区：初始预留 256 个实例，按需扩容。
   let refractionArrowCapacity = 256;
   let refractionArrowBuffer = device.createBuffer({
@@ -117,6 +128,7 @@ export function createRenderer({
     uniformBuffer,
     refractionDebugBuffer: refractionArrowBuffer,
     imageTexture,
+    backgroundHtmlTexture,
     labelTexture,
     sampler,
   });
@@ -132,11 +144,38 @@ export function createRenderer({
   let refractionDebugVisible = true;
   // 标记 HTML-in-Canvas label 纹理是否已有可绘制内容。
   let labelTextureReady = false;
+  // 标记背景 HTML 纹理是否已有可采样内容。
+  let backgroundHtmlTextureReady = false;
   // 记录最近一次写入箭头缓冲时的几何与参数快照。
   let refractionArrowSnapshot: RefractionArrowSnapshot | null = null;
 
-  // 6 个 vec4 对应 24 个 float。
-  const uniformFloat32Data = new Float32Array(24);
+  // 7 个 vec4 对应 28 个 float。
+  const uniformFloat32Data = new Float32Array(28);
+
+  /**
+   * 读取背景 HTML demo 层相对画布的 CSS 像素 bounds。
+   * @returns 背景 HTML 层 bounds。
+   */
+  function readBackgroundHtmlBounds(): {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  } {
+    if (!backgroundHtmlLayer) {
+      return { left: 0, top: 0, width: 1, height: 1 };
+    }
+
+    const canvasBounds = canvas.getBoundingClientRect();
+    const layerBounds = backgroundHtmlLayer.getBoundingClientRect();
+
+    return {
+      left: layerBounds.left - canvasBounds.left,
+      top: layerBounds.top - canvasBounds.top,
+      width: Math.max(1, layerBounds.width),
+      height: Math.max(1, layerBounds.height),
+    };
+  }
 
   /**
    * 在箭头实例缓冲被替换后，同步重建依赖该缓冲的 bind group 与管线。
@@ -150,6 +189,7 @@ export function createRenderer({
       uniformBuffer,
       refractionDebugBuffer: refractionArrowBuffer,
       imageTexture,
+      backgroundHtmlTexture,
       labelTexture,
       sampler,
     });
@@ -186,6 +226,43 @@ export function createRenderer({
     );
     labelTextureReady = false;
     recreatePipelines();
+    return true;
+  }
+
+  /**
+   * 按当前画布像素尺寸确保背景 HTML 纹理可用。
+   * @returns 纹理是否发生重建。
+   */
+  function ensureBackgroundHtmlTextureSize(): boolean {
+    const bounds = readBackgroundHtmlBounds();
+    const nextWidth = Math.max(
+      1,
+      Math.ceil(bounds.width * state.canvas.devicePixelRatio),
+    );
+    const nextHeight = Math.max(
+      1,
+      Math.ceil(bounds.height * state.canvas.devicePixelRatio),
+    );
+
+    if (
+      nextWidth === backgroundHtmlTextureWidth &&
+      nextHeight === backgroundHtmlTextureHeight
+    ) {
+      return false;
+    }
+
+    backgroundHtmlTexture.destroy();
+    backgroundHtmlTextureWidth = nextWidth;
+    backgroundHtmlTextureHeight = nextHeight;
+    backgroundHtmlTexture = device.createTexture(
+      buildLabelTextureDescriptor({
+        width: backgroundHtmlTextureWidth,
+        height: backgroundHtmlTextureHeight,
+      }),
+    );
+    backgroundHtmlTextureReady = false;
+    recreatePipelines();
+    sceneDirty = true;
     return true;
   }
 
@@ -328,6 +405,8 @@ export function createRenderer({
     updateGlassUi(!isGlassUiHidden());
     // 玻璃尺寸或 DPR 变化时同步 label 纹理尺寸。
     ensureLabelTextureSize();
+    // 画布尺寸或 DPR 变化时同步背景 HTML 纹理尺寸。
+    ensureBackgroundHtmlTextureSize();
 
     if (changed || !targets) recreateOffscreenTargets();
     return changed;
@@ -338,6 +417,8 @@ export function createRenderer({
    * @returns 无返回值。
    */
   function writeUniforms(): void {
+    const backgroundHtmlBounds = readBackgroundHtmlBounds();
+
     // 将状态与参数打包到 uniform 数组。
     packUniforms(
       {
@@ -350,6 +431,11 @@ export function createRenderer({
         overlayWidth: state.glass.width,
         overlayHeight: state.glass.height,
         params,
+        backgroundHtmlReady: backgroundHtmlTextureReady,
+        backgroundHtmlLeft: backgroundHtmlBounds.left,
+        backgroundHtmlTop: backgroundHtmlBounds.top,
+        backgroundHtmlWidth: backgroundHtmlBounds.width,
+        backgroundHtmlHeight: backgroundHtmlBounds.height,
       },
       uniformFloat32Data,
     );
@@ -410,6 +496,16 @@ export function createRenderer({
         texture: labelTexture,
       });
       labelTextureReady = true;
+    },
+    uploadBackgroundHtmlTexture() {
+      if (!backgroundHtmlLayer) return;
+
+      ensureBackgroundHtmlTextureSize();
+      queue.copyElementImageToTexture(backgroundHtmlLayer, {
+        texture: backgroundHtmlTexture,
+      });
+      backgroundHtmlTextureReady = true;
+      sceneDirty = true;
     },
   };
 }
