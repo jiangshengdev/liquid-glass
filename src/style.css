@@ -57,6 +57,8 @@ canvas {
   display: block;
   /* 禁用触摸默认行为 */
   touch-action: none;
+  /* 默认让真实 HTML 接收交互，debug 开启时由脚本切回 auto */
+  pointer-events: none;
 }
 
 /* 背景 HTML demo 层：作为 HTML-in-Canvas 纹理源 */
@@ -71,8 +73,8 @@ canvas {
   width: 100vw;
   /* 显式匹配浏览器内部高度，避免使用 inset 铺满 */
   height: 100vh;
-  /* 不参与指针命中，避免影响当前拖拽交互 */
-  pointer-events: none;
+  /* 默认允许真实 HTML 交互，debug 开启时由脚本临时禁用 */
+  pointer-events: auto;
   /* 避免文本选择影响演示 */
   user-select: none;
   /* 独立布局与绘制，便于浏览器复制到纹理 */
@@ -226,6 +228,26 @@ canvas {
   transform: rotate(-4deg);
   /* 阴影 */
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+/* 透明玻璃命中层：只覆盖玻璃矩形，阻止其下方背景 HTML 交互 */
+.glass-hit-layer {
+  /* 绝对定位到玻璃矩形 */
+  position: absolute;
+  /* 提升到 canvas 之上、辅助 UI 之下 */
+  z-index: 4;
+  /* 初始尺寸由脚本同步 */
+  left: 0;
+  /* 初始尺寸由脚本同步 */
+  top: 0;
+  /* 初始尺寸由脚本同步 */
+  width: 1px;
+  /* 初始尺寸由脚本同步 */
+  height: 1px;
+  /* 只负责事件命中，不产生视觉像素 */
+  background: transparent;
+  /* 禁用触摸默认行为，保证拖拽稳定 */
+  touch-action: none;
 }
 
 /* 玻璃按钮文本覆盖层 */

@@ -27,6 +27,7 @@ function pointerPositionCss(
  */
 export function attachPointerHandlers({
   canvas,
+  glassHitLayer,
   state,
   resizeMargin,
   ensureCanvasConfigured,
@@ -35,7 +36,12 @@ export function attachPointerHandlers({
   isRefractionDebugVisible,
   stoppedRef,
 }: PointerHandlersDeps): () => void {
-  const updateHoverState = (pointerLeft: number, pointerTop: number): void => {
+  const updateHoverState = (
+    target: HTMLElement,
+    pointerLeft: number,
+    pointerTop: number,
+    allowBackgroundDrag: boolean,
+  ): void => {
     const hit = hitTestGlass(
       state.glass,
       pointerLeft,
@@ -43,21 +49,25 @@ export function attachPointerHandlers({
       resizeMargin,
     );
     if (hit.mode) {
-      canvas.style.cursor = cursorForHit(hit.mode, hit.edges) || "default";
+      target.style.cursor = cursorForHit(hit.mode, hit.edges) || "default";
       updateGlassUi(true);
       return;
     }
 
-    if (isRefractionDebugVisible()) {
-      canvas.style.cursor = cursorForHit("background", hit.edges) || "grab";
+    if (allowBackgroundDrag && isRefractionDebugVisible()) {
+      target.style.cursor = cursorForHit("background", hit.edges) || "grab";
     } else {
-      canvas.style.cursor = "default";
+      target.style.cursor = "default";
     }
     updateGlassUi(false);
   };
 
   // 按下时：命中检测并进入拖拽状态。
-  const onPointerDown = (event: PointerEvent): void => {
+  const onPointerDown = (
+    target: HTMLElement,
+    allowBackgroundDrag: boolean,
+    event: PointerEvent,
+  ): void => {
     if (stoppedRef.value) return;
     if (!event.isPrimary || event.button !== 0) return;
 
@@ -72,11 +82,12 @@ export function attachPointerHandlers({
       resizeMargin,
     );
     const dragMode =
-      hit.mode ?? (isRefractionDebugVisible() ? "background" : null);
+      hit.mode ??
+      (allowBackgroundDrag && isRefractionDebugVisible() ? "background" : null);
     if (!dragMode) return;
 
     // 捕获指针，确保拖拽不中断。
-    canvas.setPointerCapture(event.pointerId);
+    target.setPointerCapture(event.pointerId);
     state.startDrag(
       dragMode,
       event.pointerId,
@@ -87,11 +98,11 @@ export function attachPointerHandlers({
 
     if (dragMode === "background") {
       updateGlassUi(false);
-      canvas.style.cursor = "grabbing";
+      target.style.cursor = "grabbing";
     } else {
       updateGlassUi(true);
-      canvas.style.cursor =
-        cursorForHit(dragMode, hit.edges) || canvas.style.cursor;
+      target.style.cursor =
+        cursorForHit(dragMode, hit.edges) || target.style.cursor;
     }
 
     // 阻止默认行为以避免文本选择等。
@@ -101,7 +112,11 @@ export function attachPointerHandlers({
   };
 
   // 移动时：未拖拽则更新悬停光标，拖拽中则更新几何状态。
-  const onPointerMove = (event: PointerEvent): void => {
+  const onPointerMove = (
+    target: HTMLElement,
+    allowBackgroundDrag: boolean,
+    event: PointerEvent,
+  ): void => {
     if (stoppedRef.value) return;
     // 计算指针在画布内的位置。
     const pointerPosition = pointerPositionCss(canvas, event);
@@ -109,7 +124,12 @@ export function attachPointerHandlers({
     ensureCanvasConfigured();
 
     if (!state.drag.active) {
-      updateHoverState(pointerPosition.left, pointerPosition.top);
+      updateHoverState(
+        target,
+        pointerPosition.left,
+        pointerPosition.top,
+        allowBackgroundDrag,
+      );
       return;
     }
 
@@ -118,16 +138,16 @@ export function attachPointerHandlers({
     // 根据模式应用移动、缩放或背景偏移。
     if (state.drag.mode === "move") {
       state.applyMove(pointerPosition.left, pointerPosition.top);
-      canvas.style.cursor = "move";
+      target.style.cursor = "move";
       updateGlassUi(true);
     } else if (state.drag.mode === "resize") {
       state.applyResize(pointerPosition.left, pointerPosition.top);
-      canvas.style.cursor =
-        cursorForHit(state.drag.mode, state.drag) || canvas.style.cursor;
+      target.style.cursor =
+        cursorForHit(state.drag.mode, state.drag) || target.style.cursor;
       updateGlassUi(true);
     } else {
       state.applyBackgroundDrag(pointerPosition.left, pointerPosition.top);
-      canvas.style.cursor = "grabbing";
+      target.style.cursor = "grabbing";
       updateGlassUi(false);
     }
 
@@ -137,50 +157,90 @@ export function attachPointerHandlers({
   };
 
   // 抬起/取消时：退出拖拽并触发一次重绘。
-  const onPointerUp = (event: PointerEvent): void => {
+  const onPointerUp = (
+    target: HTMLElement,
+    allowBackgroundDrag: boolean,
+    event: PointerEvent,
+  ): void => {
     try {
-      if (canvas.hasPointerCapture(event.pointerId))
-        canvas.releasePointerCapture(event.pointerId);
+      if (target.hasPointerCapture(event.pointerId))
+        target.releasePointerCapture(event.pointerId);
     } catch {
       // 某些浏览器在竞争态下会抛错，忽略即可。
     }
     // 结束拖拽并刷新。
     state.endDrag(event.pointerId);
     const pointerPosition = pointerPositionCss(canvas, event);
-    updateHoverState(pointerPosition.left, pointerPosition.top);
+    updateHoverState(
+      target,
+      pointerPosition.left,
+      pointerPosition.top,
+      allowBackgroundDrag,
+    );
     requestRender();
   };
 
   // 丢失 capture 时也要收尾，避免状态卡住。
-  const onLostCapture = (event: PointerEvent): void => {
+  const onLostCapture = (target: HTMLElement, event: PointerEvent): void => {
     // 捕获丢失时强制结束拖拽。
     state.endDrag(event.pointerId);
-    canvas.style.cursor = "default";
+    target.style.cursor = "default";
     requestRender();
   };
 
   // 鼠标离开且未拖拽时，恢复默认视觉状态。
-  const onPointerLeave = (): void => {
+  const onPointerLeave = (target: HTMLElement): void => {
     if (state.drag.active) return;
     // 退出画布后恢复默认光标并隐藏 UI。
-    canvas.style.cursor = "default";
+    target.style.cursor = "default";
     updateGlassUi(false);
   };
 
-  canvas.addEventListener("pointerdown", onPointerDown, { passive: false });
-  canvas.addEventListener("pointermove", onPointerMove, { passive: false });
-  canvas.addEventListener("pointerup", onPointerUp, { passive: false });
-  canvas.addEventListener("pointercancel", onPointerUp, { passive: false });
-  canvas.addEventListener("lostpointercapture", onLostCapture);
-  canvas.addEventListener("pointerleave", onPointerLeave);
+  const bindPointerTarget = (
+    target: HTMLElement,
+    allowBackgroundDrag: boolean,
+  ): (() => void) => {
+    const handlePointerDown = (event: PointerEvent): void =>
+      onPointerDown(target, allowBackgroundDrag, event);
+    const handlePointerMove = (event: PointerEvent): void =>
+      onPointerMove(target, allowBackgroundDrag, event);
+    const handlePointerUp = (event: PointerEvent): void =>
+      onPointerUp(target, allowBackgroundDrag, event);
+    const handleLostCapture = (event: PointerEvent): void =>
+      onLostCapture(target, event);
+    const handlePointerLeave = (): void => onPointerLeave(target);
+
+    target.addEventListener("pointerdown", handlePointerDown, {
+      passive: false,
+    });
+    target.addEventListener("pointermove", handlePointerMove, {
+      passive: false,
+    });
+    target.addEventListener("pointerup", handlePointerUp, { passive: false });
+    target.addEventListener("pointercancel", handlePointerUp, {
+      passive: false,
+    });
+    target.addEventListener("lostpointercapture", handleLostCapture);
+    target.addEventListener("pointerleave", handlePointerLeave);
+
+    return () => {
+      target.removeEventListener("pointerdown", handlePointerDown);
+      target.removeEventListener("pointermove", handlePointerMove);
+      target.removeEventListener("pointerup", handlePointerUp);
+      target.removeEventListener("pointercancel", handlePointerUp);
+      target.removeEventListener("lostpointercapture", handleLostCapture);
+      target.removeEventListener("pointerleave", handlePointerLeave);
+    };
+  };
+
+  const cleanupCanvas = bindPointerTarget(canvas, true);
+  const cleanupGlassHitLayer = glassHitLayer
+    ? bindPointerTarget(glassHitLayer, false)
+    : null;
 
   return () => {
     // 移除全部事件监听。
-    canvas.removeEventListener("pointerdown", onPointerDown);
-    canvas.removeEventListener("pointermove", onPointerMove);
-    canvas.removeEventListener("pointerup", onPointerUp);
-    canvas.removeEventListener("pointercancel", onPointerUp);
-    canvas.removeEventListener("lostpointercapture", onLostCapture);
-    canvas.removeEventListener("pointerleave", onPointerLeave);
+    cleanupCanvas();
+    cleanupGlassHitLayer?.();
   };
 }

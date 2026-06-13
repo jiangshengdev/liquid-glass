@@ -6,6 +6,7 @@ describe("index/background-html-layer", () => {
     const html = readFileSync("index.html", "utf8");
 
     expect(html).toContain('id="background-html-layer"');
+    expect(html).toContain('id="glass-hit-layer"');
     expect(html).toContain("bg-demo-card");
     expect(html).toContain("bg-demo-chip");
   });
@@ -18,5 +19,14 @@ describe("index/background-html-layer", () => {
     expect(match?.[0]).not.toContain("inset: 0");
     expect(match?.[0]).toContain("width: 100vw");
     expect(match?.[0]).toContain("height: 100vh");
+  });
+
+  it("provides a dedicated transparent hit layer for the glass rectangle", () => {
+    const css = readFileSync("src/style.css", "utf8");
+    const match = css.match(/\.glass-hit-layer\s*\{[^}]*\}/);
+
+    expect(match).not.toBeNull();
+    expect(match?.[0]).toContain("position: absolute");
+    expect(match?.[0]).toContain("background: transparent");
   });
 });

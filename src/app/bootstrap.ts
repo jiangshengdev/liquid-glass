@@ -34,6 +34,8 @@ export interface BootstrapResult {
   glassButtonLabel: HTMLSpanElement;
   /** HTML-in-Canvas 背景 demo 层元素。 */
   backgroundHtmlLayer: HTMLDivElement | null;
+  /** 覆盖玻璃矩形的透明命中层。 */
+  glassHitLayer: HTMLDivElement | null;
   /** 当前环境是否支持 HTML-in-Canvas 文本上传。 */
   htmlInCanvasSupported: boolean;
   /** 画布首选交换链格式。 */
@@ -161,6 +163,11 @@ export async function bootstrapWebGpuApp(): Promise<BootstrapResult | null> {
       ? backgroundHtmlLayerNode
       : null;
 
+  // 获取透明玻璃命中层。
+  const glassHitLayerNode = document.getElementById("glass-hit-layer");
+  const glassHitLayer =
+    glassHitLayerNode instanceof HTMLDivElement ? glassHitLayerNode : null;
+
   const htmlInCanvasSupported = hasHtmlInCanvasWebGpuSupport({ canvas, queue });
   glassButtonLabel.hidden = !htmlInCanvasSupported;
   if (backgroundHtmlLayer) backgroundHtmlLayer.hidden = !htmlInCanvasSupported;
@@ -262,6 +269,7 @@ export async function bootstrapWebGpuApp(): Promise<BootstrapResult | null> {
     refractionDebugToggle,
     glassButtonLabel,
     backgroundHtmlLayer,
+    glassHitLayer,
     htmlInCanvasSupported,
     presentationFormat,
     sampler,

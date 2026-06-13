@@ -5,6 +5,8 @@ import type { GlassState } from "./state";
 export interface PointerHandlersDeps {
   /** 交互画布。 */
   canvas: HTMLCanvasElement;
+  /** 玻璃矩形透明命中层。 */
+  glassHitLayer: HTMLDivElement | null;
   /** 玻璃状态对象。 */
   state: GlassState;
   /** 缩放命中阈值。 */

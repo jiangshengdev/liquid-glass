@@ -2,6 +2,10 @@ import { bootstrapWebGpuApp } from "./app/bootstrap";
 import { createRuntime } from "./app/runtime";
 import { MIN_HEIGHT, MIN_WIDTH, PARAMS, RESIZE_MARGIN } from "./config/params";
 import { createRenderer } from "./gpu/renderer";
+import {
+  syncGlassHitLayerGeometry,
+  syncInteractionLayers,
+} from "./interaction/layers";
 import { attachPointerHandlers } from "./interaction/pointer";
 import { createGlassState } from "./state/glass-state";
 import { computeGlassButtonLabelFontSize } from "./ui/label-layout";
@@ -36,6 +40,7 @@ async function main(): Promise<void> {
     glassUi,
     glassButtonLabel,
     backgroundHtmlLayer,
+    glassHitLayer,
     htmlInCanvasSupported,
     refractionDebugToggle,
     presentationFormat,
@@ -80,6 +85,8 @@ async function main(): Promise<void> {
       height: state.glass.height,
       text: glassButtonLabel.textContent ?? "",
     })}px`;
+
+    syncGlassHitLayerGeometry(glassHitLayer, state.glass);
   };
 
   // 创建渲染器。
@@ -146,12 +153,24 @@ async function main(): Promise<void> {
   // 同步初始调试开关状态。
   let refractionDebugVisible = refractionDebugToggle?.checked ?? true;
   renderer.setRefractionDebugVisible(refractionDebugVisible);
+  syncInteractionLayers({
+    canvas,
+    backgroundHtmlLayer,
+    glassHitLayer,
+    debugActive: refractionDebugVisible,
+  });
 
   // 绑定折射箭头调试开关。
   if (refractionDebugToggle) {
     const onRefractionDebugToggleChange = (): void => {
       refractionDebugVisible = refractionDebugToggle.checked;
       renderer.setRefractionDebugVisible(refractionDebugVisible);
+      syncInteractionLayers({
+        canvas,
+        backgroundHtmlLayer,
+        glassHitLayer,
+        debugActive: refractionDebugVisible,
+      });
       runtime.requestRender();
     };
     refractionDebugToggle.addEventListener(
@@ -169,6 +188,7 @@ async function main(): Promise<void> {
   // 绑定指针交互。
   const disposePointerHandlers = attachPointerHandlers({
     canvas,
+    glassHitLayer,
     state,
     resizeMargin: RESIZE_MARGIN,
     ensureCanvasConfigured: renderer.ensureCanvasConfigured,
