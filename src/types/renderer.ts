@@ -13,6 +13,8 @@ export interface Renderer {
   setSceneDirty(value: boolean): void;
   /** 设置折射箭头调试层显隐。 */
   setRefractionDebugVisible(value: boolean): void;
+  /** 上传 HTML-in-Canvas 文本覆盖层纹理。 */
+  uploadLabelTexture(): void;
 }
 
 /** 创建渲染器所需依赖集合。 */
@@ -25,6 +27,8 @@ export interface RendererDeps {
   canvas: HTMLCanvasElement;
   /** 画布 WebGPU 上下文。 */
   canvasContext: GPUCanvasContext;
+  /** HTML-in-Canvas 文本覆盖层元素。 */
+  glassButtonLabel: HTMLSpanElement;
   /** 纹理采样器。 */
   sampler: GPUSampler;
   /** 背景图纹理。 */

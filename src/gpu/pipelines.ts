@@ -14,6 +14,8 @@ export interface RendererPipelines {
   imageBindGroup: GPUBindGroup;
   /** 折射箭头实例 bind group。 */
   refractionDebugBindGroup: GPUBindGroup;
+  /** 文本覆盖层 bind group。 */
+  labelBindGroup: GPUBindGroup;
   /** 场景渲染管线。 */
   scenePipeline: GPURenderPipeline;
   /** 横向模糊管线。 */
@@ -26,6 +28,8 @@ export interface RendererPipelines {
   overlayPipeline: GPURenderPipeline;
   /** 折射箭头调试管线。 */
   refractionDebugPipeline: GPURenderPipeline;
+  /** 文本覆盖层管线。 */
+  labelPipeline: GPURenderPipeline;
 }
 
 interface CreatePipelinesOptions {
@@ -41,6 +45,8 @@ interface CreatePipelinesOptions {
   refractionDebugBuffer: GPUBuffer;
   /** 图像纹理。 */
   imageTexture: GPUTexture;
+  /** 文本覆盖层纹理。 */
+  labelTexture: GPUTexture;
   /** 采样器。 */
   sampler: GPUSampler;
 }
@@ -57,6 +63,7 @@ export function createPipelines({
   uniformBuffer,
   refractionDebugBuffer,
   imageTexture,
+  labelTexture,
   sampler,
 }: CreatePipelinesOptions): RendererPipelines {
   // uniform：所有通道共享场景参数。
@@ -125,6 +132,19 @@ export function createPipelines({
   const refractionDebugBindGroup = device.createBindGroup({
     layout: refractionDebugBindGroupLayout,
     entries: [{ binding: 0, resource: { buffer: refractionDebugBuffer } }],
+  });
+
+  // 创建文本覆盖层 bind group，复用图像布局中的主纹理与采样器槽位。
+  const labelBindGroup = device.createBindGroup({
+    layout: imageBindGroupLayout,
+    entries: [
+      // 主纹理：HTML-in-Canvas label。
+      { binding: 0, resource: labelTexture.createView() },
+      // 次纹理：占位绑定，shader 不读取。
+      { binding: 1, resource: labelTexture.createView() },
+      // 采样器。
+      { binding: 2, resource: sampler },
+    ],
   });
 
   // 合并 uniform 与图像布局。
@@ -241,6 +261,34 @@ export function createPipelines({
     primitive: { topology: "triangle-list" },
   });
 
+  // 文本覆盖层通道：最终覆盖在玻璃按钮和调试箭头上方。
+  const labelPipeline = device.createRenderPipeline({
+    layout: pipelineLayout,
+    vertex: { module, entryPoint: "vertex_fullscreen" },
+    fragment: {
+      module,
+      entryPoint: "fragment_label",
+      targets: [
+        {
+          format: presentationFormat,
+          blend: {
+            color: {
+              srcFactor: "src-alpha",
+              dstFactor: "one-minus-src-alpha",
+              operation: "add",
+            },
+            alpha: {
+              srcFactor: "one",
+              dstFactor: "one-minus-src-alpha",
+              operation: "add",
+            },
+          },
+        },
+      ],
+    },
+    primitive: { topology: "triangle-list" },
+  });
+
   return {
     uniformBindGroupLayout,
     imageBindGroupLayout,
@@ -248,11 +296,13 @@ export function createPipelines({
     uniformBindGroup,
     imageBindGroup,
     refractionDebugBindGroup,
+    labelBindGroup,
     scenePipeline,
     blurHorizontalPipeline,
     blurVerticalPipeline,
     presentPipeline,
     overlayPipeline,
     refractionDebugPipeline,
+    labelPipeline,
   };
 }

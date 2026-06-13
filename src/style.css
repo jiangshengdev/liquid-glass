@@ -59,6 +59,34 @@ canvas {
   touch-action: none;
 }
 
+/* 玻璃按钮文本覆盖层 */
+.glass-button-label {
+  /* 绝对定位到画布坐标系 */
+  position: absolute;
+  /* 横向居中文本 */
+  display: flex;
+  /* 垂直居中文本 */
+  align-items: center;
+  /* 水平居中文本 */
+  justify-content: center;
+  /* 透明背景，只上传文字像素 */
+  background: transparent;
+  /* 高对比白色文字 */
+  color: rgba(255, 255, 255, 0.94);
+  /* 提升文字重量 */
+  font-weight: 700;
+  /* 紧凑行高，便于垂直居中 */
+  line-height: 1;
+  /* 禁止换行 */
+  white-space: nowrap;
+  /* 避免文本选择影响演示 */
+  user-select: none;
+  /* label 只负责视觉覆盖，不参与鼠标命中 */
+  pointer-events: none;
+  /* 让文本在浏览器侧独立布局 */
+  contain: layout paint style;
+}
+
 /* 玻璃 UI 容器 */
 .glass-ui {
   /* 拖拽把手尺寸变量 */

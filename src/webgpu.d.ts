@@ -152,6 +152,11 @@ interface GPUQueue {
     destination: { texture: GPUTexture },
     copySize: { width: number; height: number },
   ): void;
+  /** 复制 HTML-in-Canvas 元素图像到纹理。 */
+  copyElementImageToTexture(
+    source: Element,
+    destination: { texture: GPUTexture },
+  ): void;
   /** 提交命令缓冲。 */
   submit(commandBuffers: GPUCommandBuffer[]): void;
 }
@@ -208,4 +213,8 @@ interface Navigator {
 interface HTMLCanvasElement {
   /** 获取 WebGPU 上下文。 */
   getContext(contextId: "webgpu"): GPUCanvasContext | null;
+  /** HTML-in-Canvas 内容重绘回调。 */
+  onpaint: (() => void) | null;
+  /** 计算 HTML-in-Canvas 元素转换矩阵。 */
+  getElementTransform(element: Element, transform: DOMMatrix): DOMMatrix | null;
 }

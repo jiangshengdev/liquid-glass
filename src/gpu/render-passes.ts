@@ -109,6 +109,8 @@ interface EncodeFinalPassOptions {
   refractionArrowCount: number;
   /** 是否显示折射箭头调试层。 */
   refractionDebugVisible: boolean;
+  /** 文本覆盖层纹理是否已上传。 */
+  labelTextureReady: boolean;
 }
 
 /**
@@ -123,6 +125,7 @@ export function encodeFinalPass({
   pipelines,
   refractionArrowCount,
   refractionDebugVisible,
+  labelTextureReady,
 }: EncodeFinalPassOptions): void {
   // 获取交换链纹理视图。
   const view = canvasContext.getCurrentTexture().createView();
@@ -158,6 +161,13 @@ export function encodeFinalPass({
     finalPass.setPipeline(pipelines.refractionDebugPipeline);
     // 每个箭头实例由 9 个顶点拼出箭杆与箭头头。
     finalPass.draw(9, refractionArrowCount);
+  }
+
+  // 最后绘制文本覆盖层，保证文字不参与玻璃折射。
+  if (labelTextureReady) {
+    finalPass.setBindGroup(1, pipelines.labelBindGroup);
+    finalPass.setPipeline(pipelines.labelPipeline);
+    finalPass.draw(3);
   }
 
   // 结束通道。

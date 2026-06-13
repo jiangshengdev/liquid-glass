@@ -8,7 +8,15 @@
   </head>
   <body>
     <div id="app">
-      <canvas id="webgpu-canvas" aria-label="WebGPU 画布"></canvas>
+      <canvas id="webgpu-canvas" aria-label="WebGPU 画布" layoutsubtree>
+        <span
+          id="glass-button-label"
+          class="glass-button-label"
+          aria-hidden="true"
+        >
+          Liquid Glass
+        </span>
+      </canvas>
 
       <!-- Hover/drag handles (Figma/Photoshop-like). Pure UI, doesn't affect rendering. -->
       <div class="glass-ui" id="glass-ui" hidden aria-hidden="true">

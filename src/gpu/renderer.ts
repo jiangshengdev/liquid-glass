@@ -69,6 +69,7 @@ export function createRenderer({
   queue,
   canvas,
   canvasContext,
+  glassButtonLabel,
   sampler,
   imageTexture,
   module,
@@ -87,6 +88,15 @@ export function createRenderer({
     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
   });
 
+  // HTML-in-Canvas label 初始纹理，后续按玻璃按钮尺寸重建。
+  let labelTextureWidth = 1;
+  let labelTextureHeight = 1;
+  let labelTexture = device.createTexture({
+    size: { width: labelTextureWidth, height: labelTextureHeight },
+    format: "rgba8unorm",
+    usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
+  });
+
   // 折射箭头实例缓冲区：初始预留 256 个实例，按需扩容。
   let refractionArrowCapacity = 256;
   let refractionArrowBuffer = device.createBuffer({
@@ -102,6 +112,7 @@ export function createRenderer({
     uniformBuffer,
     refractionDebugBuffer: refractionArrowBuffer,
     imageTexture,
+    labelTexture,
     sampler,
   });
 
@@ -114,6 +125,8 @@ export function createRenderer({
   let refractionArrowsDirty = true;
   // 当前是否显示折射箭头调试层。
   let refractionDebugVisible = true;
+  // 标记 HTML-in-Canvas label 纹理是否已有可绘制内容。
+  let labelTextureReady = false;
   // 记录最近一次写入箭头缓冲时的几何与参数快照。
   let refractionArrowSnapshot: RefractionArrowSnapshot | null = null;
 
@@ -132,8 +145,40 @@ export function createRenderer({
       uniformBuffer,
       refractionDebugBuffer: refractionArrowBuffer,
       imageTexture,
+      labelTexture,
       sampler,
     });
+  }
+
+  /**
+   * 按当前玻璃按钮尺寸确保 label 纹理可用。
+   * @returns 纹理是否发生重建。
+   */
+  function ensureLabelTextureSize(): boolean {
+    const nextWidth = Math.max(
+      1,
+      Math.floor(state.glass.width * state.canvas.devicePixelRatio),
+    );
+    const nextHeight = Math.max(
+      1,
+      Math.floor(state.glass.height * state.canvas.devicePixelRatio),
+    );
+
+    if (nextWidth === labelTextureWidth && nextHeight === labelTextureHeight) {
+      return false;
+    }
+
+    labelTexture.destroy();
+    labelTextureWidth = nextWidth;
+    labelTextureHeight = nextHeight;
+    labelTexture = device.createTexture({
+      size: { width: labelTextureWidth, height: labelTextureHeight },
+      format: "rgba8unorm",
+      usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
+    });
+    labelTextureReady = false;
+    recreatePipelines();
+    return true;
   }
 
   /**
@@ -273,6 +318,8 @@ export function createRenderer({
 
     // 同步玻璃 UI 的可见与位置。
     updateGlassUi(!isGlassUiHidden());
+    // 玻璃尺寸或 DPR 变化时同步 label 纹理尺寸。
+    ensureLabelTextureSize();
 
     if (changed || !targets) recreateOffscreenTargets();
     return changed;
@@ -330,6 +377,7 @@ export function createRenderer({
       pipelines,
       refractionArrowCount,
       refractionDebugVisible,
+      labelTextureReady,
     });
 
     // 提交命令到 GPU 队列。
@@ -347,6 +395,13 @@ export function createRenderer({
     },
     setRefractionDebugVisible(value: boolean) {
       refractionDebugVisible = !!value;
+    },
+    uploadLabelTexture() {
+      ensureLabelTextureSize();
+      queue.copyElementImageToTexture(glassButtonLabel, {
+        texture: labelTexture,
+      });
+      labelTextureReady = true;
     },
   };
 }

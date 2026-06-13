@@ -4,6 +4,7 @@ import { MIN_HEIGHT, MIN_WIDTH, PARAMS, RESIZE_MARGIN } from "./config/params";
 import { createRenderer } from "./gpu/renderer";
 import { attachPointerHandlers } from "./interaction/pointer";
 import { createGlassState } from "./state/glass-state";
+import { computeGlassButtonLabelFontSize } from "./ui/label-layout";
 import { showFallback } from "./utils/dom";
 import { devicePixelRatioClamped } from "./utils/math";
 
@@ -33,6 +34,7 @@ async function main(): Promise<void> {
     canvas,
     canvasContext,
     glassUi,
+    glassButtonLabel,
     refractionDebugToggle,
     presentationFormat,
     sampler,
@@ -54,18 +56,28 @@ async function main(): Promise<void> {
 
   // 将状态层中的玻璃矩形同步到 DOM 辅助框。
   const updateGlassUi = (visible?: boolean): void => {
-    // 无 UI 元素时直接返回。
-    if (!glassUi) return;
-    // 可见性显式传入时更新 hidden。
-    if (typeof visible === "boolean") glassUi.hidden = !visible;
-    // 隐藏状态无需继续更新位置。
-    if (glassUi.hidden) return;
+    if (glassUi) {
+      // 可见性显式传入时更新 hidden。
+      if (typeof visible === "boolean") glassUi.hidden = !visible;
+      if (!glassUi.hidden) {
+        // 同步位置与尺寸。
+        glassUi.style.left = `${state.glass.left}px`;
+        glassUi.style.top = `${state.glass.top}px`;
+        glassUi.style.width = `${state.glass.width}px`;
+        glassUi.style.height = `${state.glass.height}px`;
+      }
+    }
 
-    // 同步位置与尺寸。
-    glassUi.style.left = `${state.glass.left}px`;
-    glassUi.style.top = `${state.glass.top}px`;
-    glassUi.style.width = `${state.glass.width}px`;
-    glassUi.style.height = `${state.glass.height}px`;
+    // 文本覆盖层始终跟随玻璃按钮，并覆盖在按钮上方。
+    glassButtonLabel.style.left = `${state.glass.left}px`;
+    glassButtonLabel.style.top = `${state.glass.top}px`;
+    glassButtonLabel.style.width = `${state.glass.width}px`;
+    glassButtonLabel.style.height = `${state.glass.height}px`;
+    glassButtonLabel.style.fontSize = `${computeGlassButtonLabelFontSize({
+      width: state.glass.width,
+      height: state.glass.height,
+      text: glassButtonLabel.textContent ?? "",
+    })}px`;
   };
 
   // 创建渲染器。
@@ -74,6 +86,7 @@ async function main(): Promise<void> {
     queue,
     canvas,
     canvasContext,
+    glassButtonLabel,
     sampler,
     imageTexture,
     module: shaderModule,
@@ -113,6 +126,16 @@ async function main(): Promise<void> {
 
   // 创建运行时调度器。
   const runtime = createRuntime({ device, renderer });
+
+  // HTML-in-Canvas 重绘时上传 label 纹理，并请求最终合成。
+  const onCanvasPaint = (): void => {
+    renderer.uploadLabelTexture();
+    runtime.requestRender();
+  };
+  canvas.onpaint = onCanvasPaint;
+  runtime.addCleanup(() => {
+    if (canvas.onpaint === onCanvasPaint) canvas.onpaint = null;
+  });
 
   // 同步初始调试开关状态。
   let refractionDebugVisible = refractionDebugToggle?.checked ?? true;

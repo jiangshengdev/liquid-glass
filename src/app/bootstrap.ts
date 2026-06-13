@@ -1,4 +1,5 @@
 import { shaderSource } from "../shaders";
+import { hasHtmlInCanvasWebGpuSupport } from "../utils/html-in-canvas";
 import { showFallback } from "../utils/dom";
 import { createImageTexture, loadBitmap } from "../utils/image";
 
@@ -29,6 +30,8 @@ export interface BootstrapResult {
   glassUi: HTMLDivElement | null;
   /** 折射箭头调试开关。 */
   refractionDebugToggle: HTMLInputElement | null;
+  /** HTML-in-Canvas 文本覆盖层元素。 */
+  glassButtonLabel: HTMLSpanElement;
   /** 画布首选交换链格式。 */
   presentationFormat: GPUTextureFormat;
   /** 纹理采样器。 */
@@ -135,6 +138,23 @@ export async function bootstrapWebGpuApp(): Promise<BootstrapResult | null> {
   const glassUiNode = document.getElementById("glass-ui");
   const glassUi = glassUiNode instanceof HTMLDivElement ? glassUiNode : null;
 
+  // 获取 HTML-in-Canvas 文本覆盖层。
+  const glassButtonLabelNode = document.getElementById("glass-button-label");
+  if (!(glassButtonLabelNode instanceof HTMLSpanElement)) {
+    showFallback(
+      "未找到 #glass-button-label 文本元素。请确认 index.html 页面结构是否完整。",
+    );
+    return null;
+  }
+  const glassButtonLabel = glassButtonLabelNode;
+
+  if (!hasHtmlInCanvasWebGpuSupport({ canvas, queue })) {
+    showFallback(
+      "HTML-in-Canvas 不可用：请使用支持源试用的 Chrome Canary，并启用 chrome://flags/#canvas-draw-element。",
+    );
+    return null;
+  }
+
   // 获取折射箭头调试开关。
   const refractionDebugToggleNode = document.getElementById(
     "debug-refraction-arrows",
@@ -227,6 +247,7 @@ export async function bootstrapWebGpuApp(): Promise<BootstrapResult | null> {
     canvasContext,
     glassUi,
     refractionDebugToggle,
+    glassButtonLabel,
     presentationFormat,
     sampler,
     imageTexture,
