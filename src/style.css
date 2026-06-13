@@ -75,8 +75,8 @@ canvas {
   height: 100vh;
   /* 默认允许真实 HTML 交互，debug 开启时由脚本临时禁用 */
   pointer-events: auto;
-  /* 避免文本选择影响演示 */
-  user-select: none;
+  /* debug 关闭时允许背景文本按普通 DOM 选中 */
+  user-select: text;
   /* 独立布局与绘制，便于浏览器复制到纹理 */
   contain: layout paint style;
   /* 命中同步矩阵以左上角为基准 */
@@ -178,12 +178,26 @@ canvas {
   border-radius: 6px;
   /* 浅色背景 */
   background: rgba(255, 255, 255, 0.14);
+  /* 移除原生按钮边框 */
+  border: 0;
+  /* 继承字体 */
+  font: inherit;
   /* 字号 */
   font-size: 13px;
   /* 字重 */
   font-weight: 650;
   /* 文字颜色 */
   color: rgba(255, 255, 255, 0.82);
+  /* 鼠标样式 */
+  cursor: pointer;
+}
+
+/* demo 标签按钮按下态 */
+.bg-demo-chip[aria-pressed="true"] {
+  /* 按下时提高亮度，便于验证点击 */
+  background: rgba(255, 255, 255, 0.28);
+  /* 按下态文字更亮 */
+  color: rgba(255, 255, 255, 0.96);
 }
 
 /* 背景 demo 原生控件 */

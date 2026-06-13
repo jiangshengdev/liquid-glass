@@ -11,11 +11,26 @@ describe("index/background-html-layer", () => {
     expect(html).toContain("bg-demo-chip");
   });
 
+  it("uses real buttons for background chip controls", () => {
+    const html = readFileSync("index.html", "utf8");
+
+    expect(html).toContain('<button class="bg-demo-chip" type="button"');
+    expect(html).not.toContain('<span class="bg-demo-chip"');
+  });
+
   it("includes a real interactive control in the background layer", () => {
     const html = readFileSync("index.html", "utf8");
 
     expect(html).toContain('id="background-html-control"');
     expect(html).toContain('type="range"');
+  });
+
+  it("allows selecting normal text in the background layer", () => {
+    const css = readFileSync("src/style.css", "utf8");
+    const match = css.match(/\.background-html-layer\s*\{[^}]*\}/);
+
+    expect(match).not.toBeNull();
+    expect(match?.[0]).toContain("user-select: text");
   });
 
   it("matches the browser viewport size without using inset shorthand", () => {

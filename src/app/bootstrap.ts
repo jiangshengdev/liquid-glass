@@ -2,6 +2,7 @@ import { shaderSource } from "../shaders";
 import { hasHtmlInCanvasWebGpuSupport } from "../utils/html-in-canvas";
 import { showFallback } from "../utils/dom";
 import { createImageTexture, loadBitmap } from "../utils/image";
+import { bindBackgroundChipButtons } from "./background-chip-buttons";
 
 /**
  * 将未知异常转换为可读文本。
@@ -162,6 +163,11 @@ export async function bootstrapWebGpuApp(): Promise<BootstrapResult | null> {
     backgroundHtmlLayerNode instanceof HTMLDivElement
       ? backgroundHtmlLayerNode
       : null;
+  const backgroundChipButtons =
+    backgroundHtmlLayer && "querySelectorAll" in backgroundHtmlLayer
+      ? backgroundHtmlLayer.querySelectorAll<HTMLButtonElement>(".bg-demo-chip")
+      : [];
+  bindBackgroundChipButtons(backgroundChipButtons);
 
   // 获取透明玻璃命中层。
   const glassHitLayerNode = document.getElementById("glass-hit-layer");
