@@ -35,6 +35,7 @@ async function main(): Promise<void> {
     canvasContext,
     glassUi,
     glassButtonLabel,
+    htmlInCanvasSupported,
     refractionDebugToggle,
     presentationFormat,
     sampler,
@@ -127,15 +128,17 @@ async function main(): Promise<void> {
   // 创建运行时调度器。
   const runtime = createRuntime({ device, renderer });
 
-  // HTML-in-Canvas 重绘时上传 label 纹理，并请求最终合成。
-  const onCanvasPaint = (): void => {
-    renderer.uploadLabelTexture();
-    runtime.requestRender();
-  };
-  canvas.onpaint = onCanvasPaint;
-  runtime.addCleanup(() => {
-    if (canvas.onpaint === onCanvasPaint) canvas.onpaint = null;
-  });
+  if (htmlInCanvasSupported) {
+    // HTML-in-Canvas 重绘时上传 label 纹理，并请求最终合成。
+    const onCanvasPaint = (): void => {
+      renderer.uploadLabelTexture();
+      runtime.requestRender();
+    };
+    canvas.onpaint = onCanvasPaint;
+    runtime.addCleanup(() => {
+      if (canvas.onpaint === onCanvasPaint) canvas.onpaint = null;
+    });
+  }
 
   // 同步初始调试开关状态。
   let refractionDebugVisible = refractionDebugToggle?.checked ?? true;

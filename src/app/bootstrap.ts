@@ -32,6 +32,8 @@ export interface BootstrapResult {
   refractionDebugToggle: HTMLInputElement | null;
   /** HTML-in-Canvas 文本覆盖层元素。 */
   glassButtonLabel: HTMLSpanElement;
+  /** 当前环境是否支持 HTML-in-Canvas 文本上传。 */
+  htmlInCanvasSupported: boolean;
   /** 画布首选交换链格式。 */
   presentationFormat: GPUTextureFormat;
   /** 纹理采样器。 */
@@ -148,11 +150,10 @@ export async function bootstrapWebGpuApp(): Promise<BootstrapResult | null> {
   }
   const glassButtonLabel = glassButtonLabelNode;
 
-  if (!hasHtmlInCanvasWebGpuSupport({ canvas, queue })) {
-    showFallback(
-      "HTML-in-Canvas 不可用：请使用支持源试用的 Chrome Canary，并启用 chrome://flags/#canvas-draw-element。",
-    );
-    return null;
+  const htmlInCanvasSupported = hasHtmlInCanvasWebGpuSupport({ canvas, queue });
+  glassButtonLabel.hidden = !htmlInCanvasSupported;
+  if (!htmlInCanvasSupported) {
+    log("HTML-in-Canvas unsupported: hiding label overlay");
   }
 
   // 获取折射箭头调试开关。
@@ -248,6 +249,7 @@ export async function bootstrapWebGpuApp(): Promise<BootstrapResult | null> {
     glassUi,
     refractionDebugToggle,
     glassButtonLabel,
+    htmlInCanvasSupported,
     presentationFormat,
     sampler,
     imageTexture,
