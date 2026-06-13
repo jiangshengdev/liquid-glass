@@ -3,6 +3,10 @@ import {
   createOffscreenTargets,
   type OffscreenTargets,
 } from "./offscreen-targets";
+import {
+  buildLabelTextureDescriptor,
+  computeLabelTextureSize,
+} from "./label-texture";
 import { createPipelines } from "./pipelines";
 import { encodeFinalPass, encodeScenePasses } from "./render-passes";
 import { packUniforms } from "./uniforms";
@@ -91,11 +95,12 @@ export function createRenderer({
   // HTML-in-Canvas label 初始纹理，后续按玻璃按钮尺寸重建。
   let labelTextureWidth = 1;
   let labelTextureHeight = 1;
-  let labelTexture = device.createTexture({
-    size: { width: labelTextureWidth, height: labelTextureHeight },
-    format: "rgba8unorm",
-    usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
-  });
+  let labelTexture = device.createTexture(
+    buildLabelTextureDescriptor({
+      width: labelTextureWidth,
+      height: labelTextureHeight,
+    }),
+  );
 
   // 折射箭头实例缓冲区：初始预留 256 个实例，按需扩容。
   let refractionArrowCapacity = 256;
@@ -155,14 +160,16 @@ export function createRenderer({
    * @returns 纹理是否发生重建。
    */
   function ensureLabelTextureSize(): boolean {
-    const nextWidth = Math.max(
-      1,
-      Math.floor(state.glass.width * state.canvas.devicePixelRatio),
-    );
-    const nextHeight = Math.max(
-      1,
-      Math.floor(state.glass.height * state.canvas.devicePixelRatio),
-    );
+    const labelBounds = glassButtonLabel.getBoundingClientRect();
+    const nextSize = computeLabelTextureSize({
+      cssWidth: state.glass.width,
+      cssHeight: state.glass.height,
+      devicePixelRatio: state.canvas.devicePixelRatio,
+      renderedCssWidth: labelBounds.width,
+      renderedCssHeight: labelBounds.height,
+    });
+    const nextWidth = nextSize.width;
+    const nextHeight = nextSize.height;
 
     if (nextWidth === labelTextureWidth && nextHeight === labelTextureHeight) {
       return false;
@@ -171,11 +178,12 @@ export function createRenderer({
     labelTexture.destroy();
     labelTextureWidth = nextWidth;
     labelTextureHeight = nextHeight;
-    labelTexture = device.createTexture({
-      size: { width: labelTextureWidth, height: labelTextureHeight },
-      format: "rgba8unorm",
-      usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
-    });
+    labelTexture = device.createTexture(
+      buildLabelTextureDescriptor({
+        width: labelTextureWidth,
+        height: labelTextureHeight,
+      }),
+    );
     labelTextureReady = false;
     recreatePipelines();
     return true;
