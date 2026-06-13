@@ -63,14 +63,14 @@ canvas {
 .background-html-layer {
   /* 作为一个有界 DOM 纹理源 */
   position: absolute;
-  /* 左侧偏移 */
-  left: 7vw;
-  /* 顶部偏移 */
-  top: 12vh;
-  /* 固定宽度，避免复制整屏 DOM */
-  width: min(560px, 78vw);
-  /* 固定高度，避免复制整屏 DOM */
-  height: 320px;
+  /* 左侧对齐浏览器内部区域 */
+  left: 0;
+  /* 顶部对齐浏览器内部区域 */
+  top: 0;
+  /* 显式匹配浏览器内部宽度，避免使用 inset 铺满 */
+  width: 100vw;
+  /* 显式匹配浏览器内部高度，避免使用 inset 铺满 */
+  height: 100vh;
   /* 不参与指针命中，避免影响当前拖拽交互 */
   pointer-events: none;
   /* 避免文本选择影响演示 */
@@ -93,9 +93,9 @@ canvas {
   /* 绝对定位到画布背景 */
   position: absolute;
   /* 限定内容宽度 */
-  width: 260px;
+  width: 340px;
   /* 内边距 */
-  padding: 18px 20px;
+  padding: 24px 28px;
   /* 半透明深色背景 */
   background: rgba(9, 12, 18, 0.72);
   /* 细描边 */
@@ -111,19 +111,19 @@ canvas {
 /* 主 demo 卡片位置 */
 .bg-demo-card-main {
   /* 左侧偏移 */
-  left: 0;
+  left: 7vw;
   /* 顶部偏移 */
-  top: 0;
+  top: 12vh;
 }
 
 /* 侧边 demo 卡片位置 */
 .bg-demo-card-side {
   /* 右侧偏移 */
-  right: 0;
+  right: 8vw;
   /* 下方偏移 */
-  bottom: 0;
+  bottom: 14vh;
   /* 更窄宽度 */
-  width: 160px;
+  width: 220px;
 }
 
 /* demo 小标题 */
@@ -131,7 +131,7 @@ canvas {
   /* 文字颜色偏淡 */
   color: rgba(255, 255, 255, 0.58);
   /* 字号 */
-  font-size: 12px;
+  font-size: 13px;
   /* 字重 */
   font-weight: 700;
   /* 大写字母间距 */
@@ -143,9 +143,9 @@ canvas {
 /* demo 标题 */
 .bg-demo-title {
   /* 顶部间距 */
-  margin-top: 8px;
+  margin-top: 10px;
   /* 字号 */
-  font-size: 22px;
+  font-size: 30px;
   /* 字重 */
   font-weight: 760;
   /* 行高 */
@@ -155,7 +155,7 @@ canvas {
 /* demo 标签行 */
 .bg-demo-row {
   /* 顶部间距 */
-  margin-top: 16px;
+  margin-top: 22px;
   /* 横向排列 */
   display: flex;
   /* 允许换行 */
@@ -169,13 +169,13 @@ canvas {
   /* 行内弹性布局 */
   display: inline-flex;
   /* 内边距 */
-  padding: 6px 9px;
+  padding: 8px 11px;
   /* 小圆角 */
   border-radius: 6px;
   /* 浅色背景 */
   background: rgba(255, 255, 255, 0.14);
   /* 字号 */
-  font-size: 12px;
+  font-size: 13px;
   /* 字重 */
   font-weight: 650;
   /* 文字颜色 */
@@ -185,7 +185,7 @@ canvas {
 /* demo 指标 */
 .bg-demo-metric {
   /* 字号 */
-  font-size: 34px;
+  font-size: 46px;
   /* 字重 */
   font-weight: 780;
   /* 行高 */
@@ -197,7 +197,7 @@ canvas {
   /* 顶部间距 */
   margin-top: 8px;
   /* 字号 */
-  font-size: 13px;
+  font-size: 15px;
   /* 文字颜色偏淡 */
   color: rgba(255, 255, 255, 0.62);
 }
@@ -207,11 +207,11 @@ canvas {
   /* 绝对定位 */
   position: absolute;
   /* 左侧偏移 */
-  left: 74px;
+  left: 18vw;
   /* 底部偏移 */
-  bottom: 18px;
+  bottom: 15vh;
   /* 内边距 */
-  padding: 10px 12px;
+  padding: 13px 16px;
   /* 圆角 */
   border-radius: 7px;
   /* 亮色背景 */
@@ -221,7 +221,7 @@ canvas {
   /* 字重 */
   font-weight: 720;
   /* 字号 */
-  font-size: 13px;
+  font-size: 15px;
   /* 轻微旋转 */
   transform: rotate(-4deg);
   /* 阴影 */

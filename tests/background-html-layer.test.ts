@@ -10,13 +10,13 @@ describe("index/background-html-layer", () => {
     expect(html).toContain("bg-demo-chip");
   });
 
-  it("keeps the copy source bounded instead of full canvas sized", () => {
+  it("matches the browser viewport size without using inset shorthand", () => {
     const css = readFileSync("src/style.css", "utf8");
     const match = css.match(/\.background-html-layer\s*\{[^}]*\}/);
 
     expect(match).not.toBeNull();
     expect(match?.[0]).not.toContain("inset: 0");
-    expect(match?.[0]).toContain("width:");
-    expect(match?.[0]).toContain("height:");
+    expect(match?.[0]).toContain("width: 100vw");
+    expect(match?.[0]).toContain("height: 100vh");
   });
 });
